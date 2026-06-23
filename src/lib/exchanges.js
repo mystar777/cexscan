@@ -35,7 +35,7 @@ export const EXCHANGE_META = {
   KuCoin: {
     id: "kucoin",
     icon: "/exchanges/kucoin.png",
-    referralUrl: "https://www.kucoin.com/",
+    referralUrl: "https://www.kucoin.com/r/rf/QBSFP9GS",
   },
   HTX: {
     id: "htx",
