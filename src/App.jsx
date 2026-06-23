@@ -103,15 +103,16 @@ export default function App() {
 
   const exchanges = useMemo(() => meta?.exchanges ?? [], [meta]);
   const stableCoins = useMemo(() => meta?.stableCoins ?? [], [meta]);
+  const logoText = "CEX Stable Staking";
 
   return (
     <div className="app">
       <header className="header">
         <div className="header-inner">
           <div className="brand">
-            <span className="brand-icon" aria-hidden="true">C</span>
+            <img className="brand-logo" src="/brand/logo.svg" alt={logoText} />
             <div>
-              <h1>CEX Stable Staking</h1>
+              <h1>{logoText}</h1>
               <p className="subtitle">
                 Compare stablecoin staking APY across CMC top 10 exchanges
               </p>

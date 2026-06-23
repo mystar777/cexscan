@@ -1,0 +1,22 @@
+{
+  "name": "CEX Stable Staking",
+  "short_name": "CEX Staking",
+  "description": "Stablecoin staking APY dashboard across centralized exchanges.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0b0f14",
+  "icons": [
+    {
+      "src": "/brand/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

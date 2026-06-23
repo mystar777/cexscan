@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">CEX Stable Staking</title>
+  <desc id="desc">Rounded dark mark with a green stablecoin and rising APY line.</desc>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#0d1117"/>
+  <rect x="4.75" y="4.75" width="54.5" height="54.5" rx="13.25" fill="none" stroke="#30363d" stroke-width="1.5"/>
+  <circle cx="25" cy="39" r="12" fill="#238636"/>
+  <circle cx="25" cy="39" r="8" fill="#3fb950"/>
+  <path d="M20 39h10" stroke="#0d1117" stroke-width="3" stroke-linecap="round"/>
+  <path d="M25 34v10" stroke="#0d1117" stroke-width="3" stroke-linecap="round"/>
+  <path d="M18 24l9 8 9-13 10 7" fill="none" stroke="#e6edf3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 16h10v10" fill="none" stroke="#3fb950" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
