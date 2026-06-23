@@ -1,0 +1,196 @@
+import { useRef } from "react";
+import { useDragScroll } from "../hooks/useDragScroll";
+import { PoolHeader } from "./ExchangeBrand";
+import "./ExchangeBrand.css";
+import "./ProductsTable.css";
+
+function SortIcon({ active, dir }) {
+  if (!active) return <span className="sort-icon">↕</span>;
+  return <span className="sort-icon active">{dir === "asc" ? "↑" : "↓"}</span>;
+}
+
+function formatApy(row) {
+  const max = row.apyMax ?? row.apy;
+  const min = row.apyMin;
+  if (min != null && max != null && Math.abs(min - max) > 0.01) {
+    return (
+      <span className="apy-range">
+        <strong>{max.toFixed(2)}%</strong>
+        <span className="apy-tier"> (≤{min.toFixed(2)}%)</span>
+      </span>
+    );
+  }
+  return <strong className="apy-single">{max?.toFixed(2) ?? "—"}%</strong>;
+}
+
+function TypeBadge({ type }) {
+  return <span className={`type-badge ${type}`}>{type}</span>;
+}
+
+function SourceTags({ row }) {
+  return (
+    <>
+      <span className={`source-tag ${row.source || "api"}`}>
+        {row.source === "announcement" ? "Notice" : "API"}
+      </span>
+      {row.sources?.includes("announcement") && row.sources?.includes("api") && (
+        <span className="source-tag both">+Notice</span>
+      )}
+    </>
+  );
+}
+
+function NoteCell({ row }) {
+  const text = row.note ?? "Notice";
+  if (row.announcementUrl) {
+    return (
+      <a
+        href={row.announcementUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ann-link"
+        title={row.note || "View notice"}
+      >
+        {text}
+      </a>
+    );
+  }
+  return text ? <span title={text}>{text}</span> : "";
+}
+
+export default function ProductsTable({ rows, sort, onSort }) {
+  const tableWrapRef = useRef(null);
+  const tableDragging = useDragScroll(tableWrapRef);
+
+  const columns = [
+    { key: "rank", label: "#", sortable: false },
+    { key: "asset", label: "Pool", sortable: true },
+    { key: "productType", label: "Type", sortable: true },
+    { key: "duration", label: "Duration", sortable: true },
+    { key: "apy", label: "Max APY", sortable: true },
+    { key: "apyMin", label: "Min APY", sortable: true },
+    { key: "minAmount", label: "Min", sortable: false },
+    { key: "note", label: "Note", sortable: false },
+    { key: "source", label: "Source", sortable: true },
+  ];
+
+  return (
+    <>
+      <div
+        className={`table-wrap table-desktop${tableDragging ? " is-dragging" : ""}`}
+        ref={tableWrapRef}
+      >
+        <table className="products-table">
+          <colgroup>
+            <col className="col-rank" />
+            <col className="col-pool" />
+            <col className="col-type" />
+            <col className="col-duration" />
+            <col className="col-apy" />
+            <col className="col-apy-min" />
+            <col className="col-min" />
+            <col className="col-note" />
+            <col className="col-source" />
+          </colgroup>
+          <thead>
+            <tr>
+              {columns.map((col) => (
+                <th key={col.key}>
+                  {col.sortable ? (
+                    <button
+                      type="button"
+                      className="th-btn"
+                      onClick={() => onSort(col.key)}
+                    >
+                      {col.label}
+                      <SortIcon active={sort.key === col.key} dir={sort.dir} />
+                    </button>
+                  ) : (
+                    col.label
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="empty">
+                  No staking products match your filters.
+                </td>
+              </tr>
+            ) : (
+              rows.map((row, i) => (
+                <tr key={row.id}>
+                  <td className="rank cell-nowrap">{i + 1}</td>
+                  <td className="pool-cell">
+                    <PoolHeader
+                      asset={row.asset}
+                      exchange={row.exchange}
+                      tiered={row.tierDetails?.length > 1}
+                    />
+                  </td>
+                  <td className="cell-nowrap">
+                    <TypeBadge type={row.productType} />
+                  </td>
+                  <td className="duration-cell cell-nowrap">{row.duration}</td>
+                  <td className="apy-cell cell-nowrap">{formatApy(row)}</td>
+                  <td className="muted cell-nowrap">
+                    {row.apyMin != null ? `${row.apyMin.toFixed(2)}%` : "—"}
+                  </td>
+                  <td className="muted cell-nowrap">{row.minAmount ?? "—"}</td>
+                  <td className="note-cell muted">
+                    <NoteCell row={row} />
+                  </td>
+                  <td className="source-cell cell-nowrap">
+                    <SourceTags row={row} />
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mobile-list">
+        {rows.length === 0 ? (
+          <div className="mobile-empty">No staking products match your filters.</div>
+        ) : (
+          rows.map((row, i) => (
+            <article key={row.id} className="product-card">
+              <div className="card-top">
+                <span className="card-rank">{i + 1}</span>
+                <div className="card-pool">
+                  <PoolHeader
+                    asset={row.asset}
+                    exchange={row.exchange}
+                    tiered={row.tierDetails?.length > 1}
+                  />
+                </div>
+                <div className="card-apy">{formatApy(row)}</div>
+              </div>
+              <div className="card-row">
+                <span className="card-label">Type</span>
+                <TypeBadge type={row.productType} />
+                <span className="card-duration">{row.duration}</span>
+              </div>
+              <div className="card-row">
+                <span className="card-label">Min APY</span>
+                <span className="muted">
+                  {row.apyMin != null ? `${row.apyMin.toFixed(2)}%` : "—"}
+                </span>
+                <span className="card-label spaced">Source</span>
+                <SourceTags row={row} />
+              </div>
+              {(row.note || row.announcementUrl) && (
+                <div className="card-note muted">
+                  <NoteCell row={row} />
+                </div>
+              )}
+            </article>
+          ))
+        )}
+      </div>
+    </>
+  );
+}

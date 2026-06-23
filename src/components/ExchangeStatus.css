@@ -1,0 +1,94 @@
+.exchange-status {
+  margin-bottom: 0.25rem;
+}
+
+.section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.6rem;
+}
+
+.exchange-card {
+  min-width: 130px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+.exchange-card.ok {
+  border-color: rgba(63, 185, 80, 0.35);
+}
+
+.exchange-card.pending {
+  opacity: 0.75;
+}
+
+.ex-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  min-width: 0;
+}
+
+.ex-header .exchange-link {
+  flex: 1;
+  min-width: 0;
+}
+
+.ex-rank {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.ex-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ex-count {
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+
+.ex-pending {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.ex-sources {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.src-badge {
+  font-size: 0.6rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.src-badge.api {
+  background: rgba(63, 185, 80, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.src-badge.ann {
+  background: rgba(88, 166, 255, 0.12);
+  color: #58a6ff;
+  border: 1px solid rgba(88, 166, 255, 0.3);
+}
+
+@media (min-width: 900px) {
+  .exchange-card {
+    min-width: 145px;
+  }
+}

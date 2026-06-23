@@ -1,0 +1,77 @@
+.exchange-icon {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+
+.exchange-icon-sm {
+  width: 18px;
+  height: 18px;
+}
+
+.exchange-icon-md {
+  width: 22px;
+  height: 22px;
+}
+
+.exchange-icon-lg {
+  width: 28px;
+  height: 28px;
+}
+
+.exchange-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.exchange-link:hover .exchange-link-name {
+  color: var(--link);
+  text-decoration: underline;
+}
+
+.exchange-link-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exchange-link-md .exchange-link-name {
+  font-size: 0.85rem;
+}
+
+.exchange-link-lg .exchange-link-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pool-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.pool-asset {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pool-asset .asset-badge {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .exchange-link-lg .exchange-link-name {
+    font-size: 1.05rem;
+  }
+}
