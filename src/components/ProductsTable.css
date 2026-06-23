@@ -132,8 +132,7 @@
 .card-rank {
   color: var(--text-muted);
   font-size: 0.8rem;
-  min-width: 1.25rem;
-  padding-top: 0.15rem;
+  min-width: 1.1rem;
 }
 
 .type-badge {
@@ -294,23 +293,52 @@
 
 .card-top {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 0.5rem;
+  grid-template-columns: minmax(5rem, 1fr) minmax(5rem, 1fr) minmax(5.75rem, auto);
+  align-items: center;
+  column-gap: 0.65rem;
 }
 
 .card-pool {
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-pool .pool-asset {
+  min-width: 0;
+}
+
+.card-pool .asset-badge {
+  display: inline-block;
+  max-width: 4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.card-pool .tag {
+  margin-left: 0.25rem;
+}
+
+.card-exchange {
+  min-width: 0;
+  justify-self: center;
+}
+
+.card-exchange .exchange-link {
+  max-width: 100%;
+}
+
+.card-exchange .exchange-link-name {
+  min-width: 0;
 }
 
 .card-apy {
   font-size: 1.05rem;
-  grid-column: 2;
   min-width: 0;
-  text-align: left;
+  text-align: right;
+  justify-self: end;
 }
 
 .card-apy .apy-single,

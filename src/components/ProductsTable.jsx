@@ -175,12 +175,14 @@ export default function ProductsTable({ rows, sort, onSort }) {
           rows.map((row, i) => (
             <article key={row.id} className="product-card">
               <div className="card-top">
-                <span className="card-rank">{i + 1}</span>
                 <div className="card-pool">
+                  <span className="card-rank">{i + 1}</span>
                   <PoolAsset
                     asset={row.asset}
                     tiered={row.tierDetails?.length > 1}
                   />
+                </div>
+                <div className="card-exchange">
                   <ExchangeLink exchange={row.exchange} size="sm" />
                 </div>
                 <div className="card-apy">{formatApy(row)}</div>
