@@ -8,7 +8,7 @@ Compare stablecoin staking APY across CMC top 10 centralized exchanges in one pl
 
 ## Features
 
-- Auto-sync every 30 minutes from public APIs, exchange Earn pages, and exchange announcements
+- Codex automation syncs every 30 minutes from public APIs, exchange Earn pages, and exchange announcements
 - Filters by coin, exchange, duration, and product type
 - Sortable columns (APY, Exchange, Asset, etc.)
 - DeFiLlama-style dark table UI (Project → **Exchange**)
@@ -21,7 +21,7 @@ Compare stablecoin staking APY across CMC top 10 centralized exchanges in one pl
 | OKX | Flexible Savings API |
 | Gate.io | Simple Earn API (bonus) |
 | Bitget | Earn page Next.js data |
-| MEXC | Public Earn products endpoint discovered from the Earn page prefetch script |
+| MEXC | Public Earn products endpoint discovered from the Earn page prefetch script; filters inactive/ended product states |
 | HTX | Public Earn endpoint discovered from web bundle routes |
 | Kraken | Stablecoin Rewards support article |
 | Crypto.com | Crypto Earn page reward list |
@@ -35,12 +35,13 @@ Compare stablecoin staking APY across CMC top 10 centralized exchanges in one pl
 - When APIs are private or undocumented, parse stablecoin rows from public Earn pages or their embedded hydration data: Bitget, MEXC, HTX, Crypto.com.
 - For pages blocked by WAF or rendered after hydration, use a read-only rendered-page fallback only for public page text: Binance, Coinbase, KuCoin.
 - Keep announcement parsing as a safety net for promotions and exchanges whose complete Earn data is not exposed publicly.
+- The production Node server does not run an internal 30-minute cron. A Codex automation triggers the full refresh process and the app reads the refreshed cache on demand.
 - To expand coverage further, add one exchange adapter at a time in `server/fetchers/stubs.js`, normalize through `product()`, and preserve a source URL so every row remains auditable.
 
 ## Commands
 
 ```bash
-cd /root/Web/cex-staking
+cd /opt/cexscan/current
 npm run fetch          # manual data fetch
 npm run build          # build frontend
 systemctl restart cex-staking

@@ -3,7 +3,6 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { readCache, refreshCache } from "./cache.js";
-import { startScheduler, runFetchJob } from "./scheduler.js";
 import { EXCHANGES, STABLE_COINS } from "./config.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -52,12 +51,11 @@ if (isProd) {
 async function main() {
   const cache = readCache();
   if (!cache.meta?.fetchedAt) {
-    await runFetchJob();
+    console.log("[server] cache is empty; fetching CEX staking rates once...");
+    await refreshCache();
   } else {
     console.log(`[server] using cache from ${cache.meta.fetchedAt}`);
   }
-
-  startScheduler();
 
   app.listen(PORT, "127.0.0.1", () => {
     console.log(`[server] listening on http://127.0.0.1:${PORT}`);

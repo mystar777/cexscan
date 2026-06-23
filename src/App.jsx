@@ -104,7 +104,7 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Auto-sync every 30 min via public APIs, exchange Earn pages, and notices.
+          Synced every 30 min by Codex automation via public APIs, exchange Earn pages, and notices.
           Sources include Bybit, OKX, Gate.io, Bitget, MEXC, HTX, Kraken, and
           Crypto.com where publicly available.
         </p>

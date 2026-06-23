@@ -409,6 +409,7 @@ export async function fetchMexc() {
     for (const group of data.data) {
       if (!isStableCoin(group.currency)) continue;
       for (const item of group.financialProductList ?? []) {
+        if (item.financialState !== 2) continue;
         if (item.soldOut) continue;
         if (item.endTime && item.endTime < Date.now()) continue;
 
