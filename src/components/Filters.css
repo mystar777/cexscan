@@ -2,10 +2,73 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 1rem;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.filters-toggle {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 1.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.filters-toggle:hover .filters-title,
+.filters-toggle:focus-visible .filters-title {
+  color: var(--text);
+}
+
+.filters-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.filters-title {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+}
+
+.filters-active-count {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.filters-toggle-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-muted);
+  justify-self: end;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.filters-toggle[aria-expanded="true"] .filters-toggle-icon {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.filters-body {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+}
+
+.filters-body[hidden] {
+  display: none;
 }
 
 .filter-group {
