@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useDragScroll } from "../hooks/useDragScroll";
-import { PoolHeader } from "./ExchangeBrand";
+import { ExchangeLink } from "./ExchangeBrand";
 import "./ExchangeBrand.css";
 import "./ProductsTable.css";
 
@@ -25,6 +25,15 @@ function formatApy(row) {
 
 function TypeBadge({ type }) {
   return <span className={`type-badge ${type}`}>{type}</span>;
+}
+
+function PoolAsset({ asset, tiered }) {
+  return (
+    <div className="pool-asset">
+      <span className="asset-badge">{asset}</span>
+      {tiered && <span className="tag">Tiered</span>}
+    </div>
+  );
 }
 
 function SourceTags({ row }) {
@@ -68,6 +77,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
   const columns = [
     { key: "rank", label: "#", sortable: false },
     { key: "asset", label: "Pool", sortable: true },
+    { key: "exchange", label: "Exchange", sortable: true },
     { key: "productType", label: "Type", sortable: true },
     { key: "duration", label: "Duration", sortable: true },
     { key: "apy", label: "Max APY", sortable: true },
@@ -87,6 +97,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
           <colgroup>
             <col className="col-rank" />
             <col className="col-pool" />
+            <col className="col-exchange" />
             <col className="col-type" />
             <col className="col-duration" />
             <col className="col-apy" />
@@ -127,11 +138,13 @@ export default function ProductsTable({ rows, sort, onSort }) {
                 <tr key={row.id}>
                   <td className="rank cell-nowrap">{i + 1}</td>
                   <td className="pool-cell">
-                    <PoolHeader
+                    <PoolAsset
                       asset={row.asset}
-                      exchange={row.exchange}
                       tiered={row.tierDetails?.length > 1}
                     />
+                  </td>
+                  <td className="exchange-cell cell-nowrap">
+                    <ExchangeLink exchange={row.exchange} size="sm" />
                   </td>
                   <td className="cell-nowrap">
                     <TypeBadge type={row.productType} />
@@ -164,11 +177,11 @@ export default function ProductsTable({ rows, sort, onSort }) {
               <div className="card-top">
                 <span className="card-rank">{i + 1}</span>
                 <div className="card-pool">
-                  <PoolHeader
+                  <PoolAsset
                     asset={row.asset}
-                    exchange={row.exchange}
                     tiered={row.tierDetails?.length > 1}
                   />
+                  <ExchangeLink exchange={row.exchange} size="sm" />
                 </div>
                 <div className="card-apy">{formatApy(row)}</div>
               </div>

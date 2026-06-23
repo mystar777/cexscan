@@ -6,8 +6,8 @@
 }
 
 .exchange-icon-sm {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .exchange-icon-md {
@@ -39,6 +39,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.exchange-link-sm {
+  gap: 0.4rem;
+}
+
+.exchange-link-sm .exchange-link-name {
+  font-size: 0.875rem;
 }
 
 .exchange-link-md .exchange-link-name {

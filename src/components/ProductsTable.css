@@ -27,15 +27,16 @@
 }
 
 /* Column widths */
-.col-rank { width: 3%; }
-.col-pool { width: 22%; }
+.col-rank { width: 4%; }
+.col-pool { width: 12%; }
+.col-exchange { width: 13%; }
 .col-type { width: 8%; }
 .col-duration { width: 9%; }
 .col-apy { width: 10%; }
 .col-apy-min { width: 8%; }
-.col-min { width: 7%; }
-.col-note { width: 26%; }
-.col-source { width: 7%; }
+.col-min { width: 6%; }
+.col-note { width: 22%; }
+.col-source { width: 8%; }
 
 .products-table th {
   text-align: left;
@@ -153,6 +154,14 @@
 .type-badge.onchain {
   border-color: #1f6feb;
   color: #58a6ff;
+}
+
+.exchange-cell .exchange-link {
+  max-width: 100%;
+}
+
+.exchange-cell .exchange-link-name {
+  min-width: 0;
 }
 
 .type-badge.locked {
@@ -279,21 +288,29 @@
   overflow: visible;
 }
 
+.pool-cell .pool-asset {
+  min-width: 0;
+}
+
 .card-top {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
   gap: 0.5rem;
 }
 
 .card-pool {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 .card-apy {
   font-size: 1.05rem;
-  text-align: right;
-  flex-shrink: 0;
+  grid-column: 2;
+  min-width: 0;
+  text-align: left;
 }
 
 .card-apy .apy-single,
