@@ -9,10 +9,10 @@ function SortIcon({ active, dir }) {
   return <span className="sort-icon active">{dir === "asc" ? "↑" : "↓"}</span>;
 }
 
-function formatApy(row) {
+function formatApy(row, { showMin = true } = {}) {
   const max = row.apyMax ?? row.apy;
   const min = row.apyMin;
-  if (min != null && max != null && Math.abs(min - max) > 0.01) {
+  if (showMin && min != null && max != null && Math.abs(min - max) > 0.01) {
     return (
       <span className="apy-range">
         <strong>{max.toFixed(2)}%</strong>
@@ -185,7 +185,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
                 <div className="card-exchange">
                   <ExchangeLink exchange={row.exchange} size="sm" />
                 </div>
-                <div className="card-apy">{formatApy(row)}</div>
+                <div className="card-apy">{formatApy(row, { showMin: false })}</div>
               </div>
               <div className="card-row">
                 <span className="card-label">Type</span>
