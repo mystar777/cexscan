@@ -14,6 +14,7 @@ export const EXCHANGES = [
 
 export const STABLE_COINS = [
   "USDT",
+  "USDTB",
   "USDC",
   "USD1",
   "DAI",
@@ -22,6 +23,13 @@ export const STABLE_COINS = [
   "USDE",
   "PYUSD",
   "BUSD",
+  "USDD",
+  "USD",
+  "USDGO",
+  "USDG",
+  "USDP",
+  "APXUSD",
+  "QCAD",
 ];
 
 export const FETCH_INTERVAL_MINUTES = 30;

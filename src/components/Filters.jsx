@@ -70,6 +70,7 @@ export default function Filters({
             <option value="flexible">Flexible Savings</option>
             <option value="onchain">On-chain</option>
             <option value="locked">Locked</option>
+            <option value="promo">Promo</option>
           </select>
         </label>
 

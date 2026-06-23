@@ -8,6 +8,7 @@ function SourceBadge({ sources }) {
   return (
     <span className="ex-sources">
       {sources.includes("api") && <span className="src-badge api">API</span>}
+      {sources.includes("site") && <span className="src-badge site">Site</span>}
       {sources.includes("announcement") && (
         <span className="src-badge ann">Notice</span>
       )}

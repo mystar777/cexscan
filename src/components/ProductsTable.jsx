@@ -28,12 +28,14 @@ function TypeBadge({ type }) {
 }
 
 function SourceTags({ row }) {
+  const label =
+    row.source === "announcement" ? "Notice" : row.source === "site" ? "Site" : "API";
   return (
     <>
       <span className={`source-tag ${row.source || "api"}`}>
-        {row.source === "announcement" ? "Notice" : "API"}
+        {label}
       </span>
-      {row.sources?.includes("announcement") && row.sources?.includes("api") && (
+      {row.sources?.includes("announcement") && row.sources.length > 1 && (
         <span className="source-tag both">+Notice</span>
       )}
     </>
@@ -42,10 +44,11 @@ function SourceTags({ row }) {
 
 function NoteCell({ row }) {
   const text = row.note ?? "Notice";
-  if (row.announcementUrl) {
+  const href = row.announcementUrl || row.sourceUrl;
+  if (href) {
     return (
       <a
-        href={row.announcementUrl}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         className="ann-link"

@@ -155,6 +155,16 @@
   color: #58a6ff;
 }
 
+.type-badge.locked {
+  border-color: #d29922;
+  color: var(--warning);
+}
+
+.type-badge.promo {
+  border-color: #a371f7;
+  color: #d2a8ff;
+}
+
 .apy-cell strong,
 .apy-single {
   color: var(--text);
@@ -218,6 +228,11 @@
 .source-tag.announcement {
   background: rgba(88, 166, 255, 0.12);
   color: #58a6ff;
+}
+
+.source-tag.site {
+  background: rgba(163, 113, 247, 0.12);
+  color: #d2a8ff;
 }
 
 .source-tag.both {

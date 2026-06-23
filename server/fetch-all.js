@@ -12,7 +12,7 @@ import {
 } from "./fetchers/stubs.js";
 import { fetchFromAnnouncements } from "./fetchers/announcements.js";
 
-const API_FETCHERS = [
+const EXCHANGE_FETCHERS = [
   { name: "Binance", fn: fetchBinance },
   { name: "Coinbase", fn: fetchCoinbase },
   { name: "Bybit", fn: fetchBybit },
@@ -26,17 +26,29 @@ const API_FETCHERS = [
   { name: "Crypto.com", fn: fetchCryptocom },
 ];
 
-/** Prefer API products; fill gaps from announcements; merge by exchange+asset+duration */
-function mergeProducts(apiProducts, annProducts) {
+function sourceKind(source) {
+  if (source === "announcement") return "announcement";
+  if (String(source ?? "").startsWith("site:")) return "site";
+  return "api";
+}
+
+/** Prefer direct products; fill gaps from announcements; merge by exchange+asset+type+duration */
+function mergeProducts(directProducts, annProducts) {
   const map = new Map();
 
-  for (const p of apiProducts) {
-    const key = `${p.exchange}:${p.asset}:${p.duration}`;
-    map.set(key, { ...p, source: "api", sources: ["api"] });
+  for (const p of directProducts) {
+    const kind = sourceKind(p.source);
+    const key = `${p.exchange}:${p.asset}:${p.productType}:${p.duration}:${p.sourceId ?? ""}`;
+    map.set(key, {
+      ...p,
+      sourceRef: p.source,
+      source: kind,
+      sources: [kind],
+    });
   }
 
   for (const p of annProducts) {
-    const key = `${p.exchange}:${p.asset}:${p.duration}`;
+    const key = `${p.exchange}:${p.asset}:${p.productType}:${p.duration}:${p.sourceId ?? ""}`;
     if (map.has(key)) {
       const existing = map.get(key);
       if (!existing.sources.includes("announcement")) {
@@ -55,20 +67,20 @@ function mergeProducts(apiProducts, annProducts) {
 }
 
 async function fetchExchange(entry) {
-  const apiResult = await entry.fn();
+  const directResult = await entry.fn();
   const annResult = await fetchFromAnnouncements(entry.name);
 
-  const apiProducts = (apiResult.products ?? []).map((p) => ({
+  const directProducts = (directResult.products ?? []).map((p) => ({
     ...p,
     source: p.source || "api",
   }));
   const annProducts = annResult.products ?? [];
-  const merged = mergeProducts(apiProducts, annProducts);
+  const merged = mergeProducts(directProducts, annProducts);
 
-  const errors = [...(apiResult.errors ?? []), ...(annResult.errors ?? [])].filter(
+  const errors = [...(directResult.errors ?? []), ...(annResult.errors ?? [])].filter(
     Boolean,
   );
-  const hasApi = apiProducts.length > 0;
+  const directKinds = [...new Set(directProducts.map((p) => sourceKind(p.source)))];
   const hasAnn = annProducts.length > 0;
 
   return {
@@ -76,21 +88,23 @@ async function fetchExchange(entry) {
     products: merged,
     errors: merged.length ? [] : [...new Set(errors)],
     ok: merged.length > 0,
-    apiCount: apiProducts.length,
+    apiCount: directProducts.filter((p) => sourceKind(p.source) === "api").length,
+    siteCount: directProducts.filter((p) => sourceKind(p.source) === "site").length,
     announcementCount: annProducts.length,
-    sources: [hasApi && "api", hasAnn && "announcement"].filter(Boolean),
+    sources: [...directKinds, hasAnn && "announcement"].filter(Boolean),
   };
 }
 
 export async function fetchAllProducts() {
   const startedAt = new Date().toISOString();
-  const exchangeResults = await Promise.all(API_FETCHERS.map(fetchExchange));
+  const exchangeResults = await Promise.all(EXCHANGE_FETCHERS.map(fetchExchange));
 
   const products = exchangeResults.flatMap((r) => r.products);
   const exchangeStatus = exchangeResults.map((r) => ({
     exchange: r.exchange,
     count: r.products.length,
     apiCount: r.apiCount,
+    siteCount: r.siteCount,
     announcementCount: r.announcementCount,
     sources: r.sources,
     errors: r.errors,

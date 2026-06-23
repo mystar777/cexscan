@@ -1,5 +1,6 @@
 const STABLE_SET = new Set([
   "USDT",
+  "USDTB",
   "USDC",
   "DAI",
   "FDUSD",
@@ -9,6 +10,12 @@ const STABLE_SET = new Set([
   "BUSD",
   "USDD",
   "USD1",
+  "USD",
+  "USDGO",
+  "USDG",
+  "USDP",
+  "APXUSD",
+  "QCAD",
 ]);
 
 export function isStableCoin(symbol) {
@@ -33,10 +40,11 @@ export function hourlyToApy(hourlyRate) {
   return h * 24 * 365;
 }
 
-export function makeId(exchange, asset, productType, duration) {
-  return `${exchange}:${asset}:${productType}:${duration}`
+export function makeId(exchange, asset, productType, duration, sourceId) {
+  return `${exchange}:${asset}:${productType}:${duration}:${sourceId ?? ""}`
     .toLowerCase()
-    .replace(/\s+/g, "-");
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9:-]+/g, "-");
 }
 
 export function product({
@@ -53,12 +61,14 @@ export function product({
   maxAmount,
   note,
   source,
+  sourceId,
+  sourceUrl,
   announcementUrl,
   publishedAt,
 }) {
   const durationLabel = duration || (durationDays ? `${durationDays} days` : "Flexible");
   return {
-    id: makeId(exchange, asset, productType, durationLabel),
+    id: makeId(exchange, asset, productType, durationLabel, sourceId),
     exchange,
     asset: String(asset).toUpperCase(),
     productType,
@@ -72,6 +82,8 @@ export function product({
     maxAmount: maxAmount ?? null,
     note: note ?? null,
     source: source ?? "api",
+    sourceId: sourceId ?? null,
+    sourceUrl: sourceUrl ?? null,
     announcementUrl: announcementUrl ?? null,
     publishedAt: publishedAt ?? null,
     updatedAt: new Date().toISOString(),
