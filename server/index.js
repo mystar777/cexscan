@@ -4,6 +4,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readCache, refreshCache } from "./cache.js";
 import { EXCHANGES, STABLE_COINS } from "./config.js";
+import {
+  broadcastSnapshot,
+  getVisitorStats,
+  handleEvents,
+  startCacheWatcher,
+} from "./live-events.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3344;
@@ -31,9 +37,16 @@ app.get("/api/products", (_req, res) => {
   res.json(readCache());
 });
 
+app.get("/api/visitor-stats", (_req, res) => {
+  res.json(getVisitorStats());
+});
+
+app.get("/api/events", handleEvents);
+
 app.post("/api/refresh", async (_req, res) => {
   try {
     const snapshot = await refreshCache();
+    broadcastSnapshot("manual-refresh");
     res.json(snapshot);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -56,6 +69,8 @@ async function main() {
   } else {
     console.log(`[server] using cache from ${cache.meta.fetchedAt}`);
   }
+
+  startCacheWatcher();
 
   app.listen(PORT, "127.0.0.1", () => {
     console.log(`[server] listening on http://127.0.0.1:${PORT}`);

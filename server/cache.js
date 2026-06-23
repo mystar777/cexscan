@@ -6,8 +6,14 @@ import { FETCH_INTERVAL_MINUTES } from "./config.js";
 import { computeNextFetchAt } from "./lib/schedule.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_PATH = path.join(__dirname, "data", "cache.json");
-const HISTORY_PATH = path.join(__dirname, "data", "history.json");
+const defaultDataDir = path.join(__dirname, "data");
+const productionSharedDataDir = __dirname.includes(`${path.sep}opt${path.sep}cexscan${path.sep}releases${path.sep}`)
+  ? "/opt/cexscan/shared/data"
+  : defaultDataDir;
+
+export const DATA_DIR = process.env.CEXSCAN_DATA_DIR || productionSharedDataDir;
+export const CACHE_PATH = path.join(DATA_DIR, "cache.json");
+const HISTORY_PATH = path.join(DATA_DIR, "history.json");
 
 function ensureDir() {
   const dir = path.dirname(CACHE_PATH);

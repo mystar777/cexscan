@@ -3,9 +3,42 @@ import Dashboard from "./components/Dashboard";
 import { formatDateTime } from "./lib/format.js";
 import "./App.css";
 
+function getVisitorId() {
+  const key = "cexscan.visitorId";
+  const id =
+    window.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+
+  try {
+    const existing = window.localStorage?.getItem(key);
+    if (existing) return existing;
+    window.localStorage?.setItem(key, id);
+  } catch {
+    return id;
+  }
+
+  return id;
+}
+
+function VisitorStatsBadge({ stats }) {
+  return (
+    <div className="visitor-stats" title="Current viewers and cumulative visitors">
+      <span className="visitor-dot" aria-hidden="true" />
+      <span>
+        <strong>{stats?.online ?? "-"}</strong>명 보는 중
+      </span>
+      <span className="visitor-separator">·</span>
+      <span>
+        누적 <strong>{stats?.total ?? "-"}</strong>명
+      </span>
+    </div>
+  );
+}
+
 export default function App() {
   const [data, setData] = useState(null);
   const [meta, setMeta] = useState(null);
+  const [visitorStats, setVisitorStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -31,8 +64,41 @@ export default function App() {
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 5 * 60 * 1000);
-    return () => clearInterval(id);
+
+    if (!("EventSource" in window)) {
+      const id = setInterval(load, 5 * 60 * 1000);
+      return () => clearInterval(id);
+    }
+
+    const source = new EventSource(
+      `/api/events?visitorId=${encodeURIComponent(getVisitorId())}`,
+    );
+
+    source.addEventListener("snapshot", (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        setData(payload.products);
+        setMeta(payload.meta);
+        setError(null);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+      }
+    });
+
+    source.addEventListener("stats", (event) => {
+      try {
+        setVisitorStats(JSON.parse(event.data));
+      } catch {
+        // Ignore malformed stats events; EventSource will keep the stream alive.
+      }
+    });
+
+    source.onerror = () => {
+      setError((current) => current ?? "Live update connection is reconnecting...");
+    };
+
+    return () => source.close();
   }, [load]);
 
   const exchanges = useMemo(() => meta?.exchanges ?? [], [meta]);
@@ -45,7 +111,10 @@ export default function App() {
           <div className="brand">
             <span className="brand-icon">◈</span>
             <div>
-              <h1>CEX Stable Staking</h1>
+              <div className="brand-title-row">
+                <h1>CEX Stable Staking</h1>
+                <VisitorStatsBadge stats={visitorStats} />
+              </div>
               <p className="subtitle">
                 Compare stablecoin staking APY across CMC top 10 exchanges
               </p>
