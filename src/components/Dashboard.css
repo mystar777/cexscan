@@ -6,14 +6,15 @@
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
 .stat-card {
+  min-width: 0;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 0.85rem 1rem;
   display: flex;
   flex-direction: column;
@@ -29,13 +30,54 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .stat-value {
   font-size: 1.35rem;
   font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-value.apy {
   color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .stats-row {
+    gap: 0.5rem;
+  }
+
+  .stat-card {
+    padding: 0.65rem 0.55rem;
+  }
+
+  .stat-label {
+    font-size: 0.6rem;
+  }
+
+  .stat-value {
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-row {
+    gap: 0.4rem;
+  }
+
+  .stat-card {
+    padding: 0.55rem 0.45rem;
+  }
+
+  .stat-label {
+    font-size: 0.56rem;
+  }
+
+  .stat-value {
+    font-size: 0.95rem;
+  }
 }

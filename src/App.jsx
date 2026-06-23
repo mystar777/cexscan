@@ -22,14 +22,14 @@ function getVisitorId() {
 
 function VisitorStatsBadge({ stats }) {
   return (
-    <div className="visitor-stats" title="Current viewers and cumulative visitors">
+    <div className="visitor-stats" title="Current viewers and cumulative visits">
       <span className="visitor-dot" aria-hidden="true" />
       <span>
-        <strong>{stats?.online ?? "-"}</strong>명 보는 중
+        <strong>{stats?.online ?? "-"}</strong> watching
       </span>
-      <span className="visitor-separator">·</span>
+      <span className="visitor-separator">|</span>
       <span>
-        누적 <strong>{stats?.total ?? "-"}</strong>명
+        total <strong>{stats?.total ?? "-"}</strong> visits
       </span>
     </div>
   );
@@ -109,12 +109,9 @@ export default function App() {
       <header className="header">
         <div className="header-inner">
           <div className="brand">
-            <span className="brand-icon">◈</span>
+            <span className="brand-icon" aria-hidden="true">C</span>
             <div>
-              <div className="brand-title-row">
-                <h1>CEX Stable Staking</h1>
-                <VisitorStatsBadge stats={visitorStats} />
-              </div>
+              <h1>CEX Stable Staking</h1>
               <p className="subtitle">
                 Compare stablecoin staking APY across CMC top 10 exchanges
               </p>
@@ -126,33 +123,7 @@ export default function App() {
                 Updated: {formatDateTime(meta.fetchedAt)}
               </span>
             )}
-            {meta?.nextFetchAt && (
-              <span className="meta-pill muted">
-                Next sync: {formatDateTime(meta.nextFetchAt)}
-              </span>
-            )}
-            <button
-              type="button"
-              className={`btn-refresh${loading ? " is-spinning" : ""}`}
-              onClick={load}
-              disabled={loading}
-              aria-label="Refresh"
-              title="Refresh"
-            >
-              <svg
-                className="refresh-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-                <path d="M21 3v6h-6" />
-              </svg>
-            </button>
+            <VisitorStatsBadge stats={visitorStats} />
           </div>
         </div>
       </header>
@@ -160,7 +131,7 @@ export default function App() {
       <main className="main">
         {error && <div className="banner error">{error}</div>}
         {loading && !data ? (
-          <div className="loading">Loading data…</div>
+          <div className="loading">Loading data...</div>
         ) : (
           <Dashboard
             products={data?.products ?? []}
@@ -173,9 +144,9 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Synced every 30 min by Codex automation via public APIs, exchange Earn pages, and notices.
-          Sources include Bybit, OKX, Gate.io, Bitget, MEXC, HTX, Kraken, and
-          Crypto.com where publicly available.
+          Synced every 30 min by Codex automation via public APIs, exchange Earn pages,
+          and notices. Sources include Bybit, OKX, Gate.io, Bitget, MEXC, HTX,
+          Kraken, and Crypto.com where publicly available.
         </p>
       </footer>
     </div>

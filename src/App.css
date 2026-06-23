@@ -30,21 +30,25 @@
 }
 
 .brand-icon {
-  font-size: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(63, 185, 80, 0.35);
+  border-radius: 8px;
+  background: rgba(63, 185, 80, 0.08);
   color: var(--accent);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .brand h1 {
   margin: 0;
   font-size: 1.35rem;
   font-weight: 700;
-}
-
-.brand-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
 }
 
 .visitor-stats {
@@ -88,9 +92,9 @@
 
 .header-meta {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
 }
 
 .meta-pill {
@@ -99,54 +103,6 @@
   border-radius: 999px;
   background: var(--bg);
   border: 1px solid var(--border);
-}
-
-.meta-pill.muted {
-  color: var(--text-muted);
-}
-
-.btn-refresh {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-hover);
-  color: var(--text);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color 0.2s, color 0.2s;
-}
-
-.btn-refresh:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.btn-refresh:disabled {
-  cursor: wait;
-}
-
-.refresh-icon {
-  width: 1.15rem;
-  height: 1.15rem;
-  transform: rotate(0deg);
-}
-
-.btn-refresh.is-spinning .refresh-icon {
-  animation: refresh-spin 0.75s linear infinite;
-}
-
-@keyframes refresh-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .main {
@@ -193,10 +149,6 @@
     font-size: 1.1rem;
   }
 
-  .brand-title-row {
-    gap: 0.5rem;
-  }
-
   .visitor-stats {
     font-size: 0.65rem;
     padding: 0.25rem 0.55rem;
@@ -208,6 +160,7 @@
 
   .header-meta {
     width: 100%;
+    align-items: flex-start;
   }
 
   .meta-pill {
