@@ -1,5 +1,6 @@
 import { useState } from "react";
 import HorizontalCarousel from "./HorizontalCarousel";
+import { getExchangeMeta } from "../lib/exchanges";
 import "./Filters.css";
 
 export default function Filters({
@@ -132,17 +133,29 @@ export default function Filters({
         </HorizontalCarousel>
 
         <HorizontalCarousel label="Exchange">
-          {exchanges.map((ex) => (
-            <button
-              key={ex.id}
-              type="button"
-              className={`chip ${selectedExchanges.includes(ex.name) ? "active" : ""}`}
-              onClick={() => toggleExchange(ex.id)}
-              title={ex.name}
-            >
-              {ex.name}
-            </button>
-          ))}
+          {exchanges.map((ex) => {
+            const meta = getExchangeMeta(ex.name);
+            return (
+              <button
+                key={ex.id}
+                type="button"
+                className={`chip exchange-chip ${
+                  selectedExchanges.includes(ex.name) ? "active" : ""
+                }`}
+                onClick={() => toggleExchange(ex.id)}
+                title={ex.name}
+              >
+                <img
+                  src={meta.icon}
+                  alt=""
+                  className="exchange-chip-icon"
+                  loading="lazy"
+                  draggable={false}
+                />
+                <span>{ex.name}</span>
+              </button>
+            );
+          })}
         </HorizontalCarousel>
       </div>
     </section>
