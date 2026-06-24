@@ -23,6 +23,7 @@ const EXCHANGES = {
   gate: "gate",
   mexc: "mexc",
   "crypto-com-exchange": "cryptocom",
+  lbank: "lbank",
 };
 
 const UA = "Mozilla/5.0 (compatible; cex-staking-icon-fetch/1.0)";

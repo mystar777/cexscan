@@ -9,6 +9,7 @@ import {
   fetchHtx,
   fetchMexc,
   fetchCryptocom,
+  fetchLbank,
 } from "./fetchers/stubs.js";
 import { fetchFromAnnouncements } from "./fetchers/announcements.js";
 
@@ -24,6 +25,7 @@ const EXCHANGE_FETCHERS = [
   { name: "HTX", fn: fetchHtx },
   { name: "MEXC", fn: fetchMexc },
   { name: "Crypto.com", fn: fetchCryptocom },
+  { name: "LBank", fn: fetchLbank },
 ];
 
 function sourceKind(source) {

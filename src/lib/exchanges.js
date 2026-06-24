@@ -57,6 +57,11 @@ export const EXCHANGE_META = {
     icon: "/exchanges/cryptocom.png",
     referralUrl: "https://crypto.com/",
   },
+  LBank: {
+    id: "lbank",
+    icon: "/exchanges/lbank.png",
+    referralUrl: "https://www.lbk.pub/signup/a?icode=46I0M",
+  },
 };
 
 export function getExchangeMeta(name) {

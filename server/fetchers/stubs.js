@@ -35,6 +35,61 @@ function readableMirrorUrl(url) {
   return `https://r.jina.ai/http://r.jina.ai/http://${url}`;
 }
 
+function decodeNextFlight(html) {
+  const chunks = [];
+  const re = /self\.__next_f\.push\(\[1,"([\s\S]*?)"\]\)<\/script>/g;
+  for (const match of html.matchAll(re)) {
+    try {
+      chunks.push(JSON.parse(`"${match[1]}"`));
+    } catch {
+      /* Ignore non-data React Flight chunks. */
+    }
+  }
+  return chunks.join("\n");
+}
+
+function extractJsonArray(text, propName) {
+  const key = `"${propName}":`;
+  const idx = text.indexOf(key);
+  if (idx < 0) return null;
+
+  const start = text.indexOf("[", idx + key.length);
+  if (start < 0) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === "[") {
+      depth++;
+    } else if (ch === "]") {
+      depth--;
+      if (depth === 0) return JSON.parse(text.slice(start, i + 1));
+    }
+  }
+
+  return null;
+}
+
+function extractFlightArray(html, propName) {
+  return extractJsonArray(decodeNextFlight(html), propName) ?? [];
+}
+
 function parseCoinbaseUsdcApy(text) {
   const patterns = [
     /Earn\s+unlimited\s+([0-9]+(?:\.[0-9]+)?)%\s+rewards\s+with\s+a\s+Coinbase\s+One\s+membership/i,
@@ -506,6 +561,126 @@ export async function fetchCryptocom() {
   return {
     exchange: "Crypto.com",
     products,
+    errors,
+  };
+}
+
+function parseLbankTierDetails(item) {
+  const directTiers = item.referAprDetail
+    ?.flatMap((detail) => detail.tieredRate ?? [])
+    .map((tier) => ({
+      min: toNumber(tier.minAmount),
+      max: toNumber(tier.maxAmount),
+      apy: parseAprString(tier.interestRate),
+    }))
+    .filter((tier) => tier.apy != null);
+
+  if (directTiers?.length) return directTiers;
+
+  try {
+    return JSON.parse(item.normalTieredRateCfg ?? "[]")
+      .map((tier) => ({
+        min: toNumber(tier.minAmount),
+        max: toNumber(tier.maxAmount),
+        apy: parseAprString(tier.interestRate),
+      }))
+      .filter((tier) => tier.apy != null);
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchLbank() {
+  const products = [];
+  const errors = [];
+  const flexibleUrl = "https://www.lbank.com/flexible-list";
+  const lockedUrl = "https://www.lbank.com/locking-list";
+
+  try {
+    const html = await fetchSiteText(flexibleUrl);
+    const items = extractFlightArray(html, "flexibleListData");
+
+    for (const item of items) {
+      const asset = (item.assetCode || item.name || "").toUpperCase();
+      if (!isStableCoin(asset)) continue;
+      if (item.status && item.status !== "STARTED") continue;
+      if (item.isShow === false) continue;
+
+      const tiers = parseLbankTierDetails(item);
+      const fallbackMin = parseAprString(item.minApr ?? item.minAprStr);
+      const fallbackMax = parseAprString(item.maxApr ?? item.maxAprStr ?? item.predictYearRate);
+      const { apyMin, apyMax } = apyRangeFromTiers(tiers, fallbackMin, fallbackMax);
+      if (apyMax == null || apyMax <= 0) continue;
+
+      products.push(
+        product({
+          exchange: "LBank",
+          asset,
+          productType: "flexible",
+          duration: "Flexible",
+          durationDays: 0,
+          apy: apyMax,
+          apyMin,
+          apyMax,
+          tierDetails: tiers.length ? tiers : null,
+          minAmount: item.leastTake ?? tiers[0]?.min ?? null,
+          maxAmount: item.limitAmt ?? item.investmentLimit ?? null,
+          note: "LBank Spot Earn flexible; tiered APR may apply",
+          source: "site:lbank-spot-earn",
+          sourceId: `spot-${item.id ?? asset}`,
+          sourceUrl: flexibleUrl,
+        }),
+      );
+    }
+  } catch (err) {
+    errors.push(`flexible: ${err.message}`);
+  }
+
+  try {
+    const html = await fetchSiteText(lockedUrl);
+    const items = extractFlightArray(html, "lockingProductList");
+
+    for (const item of items) {
+      const asset = (item.assetCode || "").toUpperCase();
+      if (!isStableCoin(asset)) continue;
+
+      for (const group of Object.values(item.products ?? {})) {
+        for (const locked of group ?? []) {
+          if (locked.status != null && locked.status !== 1) continue;
+          const apy = parseAprString(locked.interestRate);
+          if (apy == null || apy <= 0) continue;
+
+          const duration = locked.lockDays ?? locked.duration?.[0]?.period ?? null;
+          const vipNote = locked.minVipLevel ? `; VIP ${locked.minVipLevel}+` : "";
+
+          products.push(
+            product({
+              exchange: "LBank",
+              asset,
+              productType: "locked",
+              duration: duration ? `${duration} days` : "Locked",
+              durationDays: duration,
+              apy,
+              apyMin: apy,
+              apyMax: apy,
+              minAmount: locked.low ?? null,
+              maxAmount: locked.remain ?? null,
+              note: `LBank Locked Earn${vipNote}`,
+              source: "site:lbank-locked-earn",
+              sourceId: `locked-${locked.id ?? `${asset}-${duration ?? "term"}`}`,
+              sourceUrl: lockedUrl,
+            }),
+          );
+        }
+      }
+    }
+  } catch (err) {
+    errors.push(`locked: ${err.message}`);
+  }
+
+  return {
+    exchange: "LBank",
+    products: uniqBy(products, (p) => p.id),
     errors,
   };
 }

@@ -1,6 +1,6 @@
 # CEX Stable Staking Dashboard
 
-Compare stablecoin staking APY across CMC top 10 centralized exchanges in one place.
+Compare stablecoin staking APY across major centralized exchanges in one place.
 
 ## URL
 
@@ -25,6 +25,7 @@ Compare stablecoin staking APY across CMC top 10 centralized exchanges in one pl
 | HTX | Public Earn endpoint discovered from web bundle routes |
 | Kraken | Stablecoin Rewards support article |
 | Crypto.com | Crypto Earn page reward list |
+| LBank | Spot Earn and Locked Earn public page hydration data |
 | Coinbase | Public Earn page text; falls back to a read-only rendered page mirror when Cloudflare blocks direct fetch |
 | KuCoin | Hold to Earn public page text; falls back to a read-only rendered page mirror for client-rendered rows |
 | Binance | Simple Earn public table via rendered-page fallback, plus announcement parsing for promotions |

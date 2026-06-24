@@ -1,4 +1,4 @@
-/** CMC top-tier CEX targets for stablecoin staking comparison */
+/** CEX targets for stablecoin staking comparison */
 export const EXCHANGES = [
   { id: "binance", name: "Binance", rank: 1, color: "#F0B90B" },
   { id: "coinbase", name: "Coinbase", rank: 2, color: "#0052FF" },
@@ -10,6 +10,7 @@ export const EXCHANGES = [
   { id: "htx", name: "HTX", rank: 8, color: "#2EBD85" },
   { id: "mexc", name: "MEXC", rank: 9, color: "#1972E2" },
   { id: "cryptocom", name: "Crypto.com", rank: 10, color: "#1199FA" },
+  { id: "lbank", name: "LBank", rank: 11, color: "#1F7BFF" },
 ];
 
 export const STABLE_COINS = [

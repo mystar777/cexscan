@@ -114,7 +114,7 @@ export default function App() {
             <div>
               <h1>{logoText}</h1>
               <p className="subtitle">
-                Compare stablecoin staking APY across CMC top 10 exchanges
+                Compare stablecoin staking APY across major centralized exchanges
               </p>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function App() {
         <p>
           Synced every 30 min by Codex automation via public APIs, exchange Earn pages,
           and notices. Sources include Bybit, OKX, Gate.io, Bitget, MEXC, HTX,
-          Kraken, and Crypto.com where publicly available.
+          Kraken, Crypto.com, and LBank where publicly available.
         </p>
       </footer>
     </div>
