@@ -7,12 +7,17 @@
 .route-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
   padding: 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-elevated);
+  text-align: center;
+}
+
+.route-head > div {
+  min-width: 0;
 }
 
 .route-kicker,
@@ -38,22 +43,6 @@
   margin: 0.35rem 0 0;
   text-transform: none;
   letter-spacing: 0;
-}
-
-.route-back {
-  min-height: 2.25rem;
-  padding: 0.45rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--text);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.route-back:hover {
-  border-color: var(--accent-dim);
-  color: var(--accent);
 }
 
 .route-form {
@@ -489,14 +478,6 @@
 @media (max-width: 420px) {
   .route-summary {
     grid-template-columns: 1fr;
-  }
-
-  .route-head {
-    align-items: flex-start;
-  }
-
-  .route-back {
-    padding-inline: 0.65rem;
   }
 
   .route-path-head {

@@ -40,7 +40,7 @@ function RouteStep({ step, index }) {
         </div>
         {step.transferFrom && (
           <p className="route-transfer">
-            {step.transferFrom}에서 {product.exchange}로 이동
+            Move from {step.transferFrom} to {product.exchange}
           </p>
         )}
         {product.note && <p className="route-note">{product.note}</p>}
@@ -67,7 +67,7 @@ function AlternativeRow({ item }) {
   );
 }
 
-export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
+export default function RoutePlanner({ products, stableCoins, meta }) {
   const [capital, setCapital] = useState("10000");
   const [horizonDays, setHorizonDays] = useState(30);
   const [asset, setAsset] = useState("all");
@@ -99,19 +99,16 @@ export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
       <div className="route-head">
         <div>
           <span className="route-kicker">AI Route</span>
-          <h2>AI 추천 루트</h2>
+          <h2>AI Recommended Route</h2>
           {meta?.fetchedAt && (
             <p className="route-updated">Updated: {formatDateTime(meta.fetchedAt)}</p>
           )}
         </div>
-        <button type="button" className="route-back" onClick={onBack}>
-          전체 상품
-        </button>
       </div>
 
       <form className="route-form" onSubmit={(event) => event.preventDefault()}>
         <label className="route-field capital">
-          <span>자본</span>
+          <span>Capital</span>
           <input
             type="number"
             min="1"
@@ -123,7 +120,7 @@ export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
         </label>
 
         <div className="route-field">
-          <span>기간</span>
+          <span>Period</span>
           <div className="route-segmented">
             {HORIZON_OPTIONS.map((days) => (
               <button
@@ -139,27 +136,27 @@ export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
         </div>
 
         <div className="route-field">
-          <span>상태</span>
+          <span>Status</span>
           <div className="route-segmented">
             <button
               type="button"
               className={isNewUser ? "active" : ""}
               onClick={() => setIsNewUser(true)}
             >
-              신규 가능
+              New user
             </button>
             <button
               type="button"
               className={!isNewUser ? "active" : ""}
               onClick={() => setIsNewUser(false)}
             >
-              기존 사용자
+              Existing user
             </button>
           </div>
         </div>
 
         <label className="route-field">
-          <span>코인</span>
+          <span>Coin</span>
           <select value={asset} onChange={(event) => setAsset(event.target.value)}>
             <option value="all">All</option>
             {assetOptions.map((coin) => (
@@ -176,7 +173,7 @@ export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
             checked={includePromos}
             onChange={(event) => setIncludePromos(event.target.checked)}
           />
-          <span>프로모션 포함</span>
+          <span>Include promos</span>
         </label>
 
         <label className="route-check">
@@ -185,7 +182,7 @@ export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
             checked={includeVip}
             onChange={(event) => setIncludeVip(event.target.checked)}
           />
-          <span>VIP 포함</span>
+          <span>Include VIP</span>
         </label>
       </form>
 
@@ -193,19 +190,19 @@ export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
         <>
           <div className="route-summary">
             <div className="route-stat">
-              <span>예상 수익</span>
+              <span>Est. profit</span>
               <strong>{formatCurrency(plan.summary.expectedProfit)}</strong>
             </div>
             <div className="route-stat highlight">
-              <span>최종 금액</span>
+              <span>Final amount</span>
               <strong>{formatCurrency(plan.summary.finalAmount)}</strong>
             </div>
             <div className="route-stat">
-              <span>유효 APY</span>
+              <span>Effective APY</span>
               <strong>{formatPercent(plan.summary.effectiveApy)}</strong>
             </div>
             <div className="route-stat">
-              <span>상품 수</span>
+              <span>Products</span>
               <strong>{plan.eligibleCount}</strong>
             </div>
           </div>
@@ -215,11 +212,11 @@ export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
               <article key={`${route.initialAmount}-${routeIndex}`} className="route-path">
                 <div className="route-path-head">
                   <div>
-                    <span>초기 배분</span>
+                    <span>Initial allocation</span>
                     <strong>{formatCurrency(route.initialAmount, 0)}</strong>
                   </div>
                   <div>
-                    <span>예상 수익</span>
+                    <span>Est. profit</span>
                     <strong>+{formatCurrency(route.totalProfit)}</strong>
                   </div>
                 </div>
@@ -235,7 +232,7 @@ export default function RoutePlanner({ products, stableCoins, meta, onBack }) {
           {plan.alternatives.length > 0 && (
             <section className="route-alternatives">
               <div className="route-section-title">
-                <span>대체 후보</span>
+                <span>Alternatives</span>
                 <strong>{asset === "all" ? "All" : asset}</strong>
               </div>
               <ul>

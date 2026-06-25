@@ -306,7 +306,7 @@ export function buildOptimalRoute(products, rawOptions) {
       alternatives: [],
       summary: null,
       eligibleCount: 0,
-      warnings: ["자본을 입력하면 추천 경로가 계산됩니다."],
+      warnings: ["Enter capital to calculate a recommended route."],
     };
   }
 
@@ -321,7 +321,7 @@ export function buildOptimalRoute(products, rawOptions) {
       alternatives: [],
       summary: null,
       eligibleCount: 0,
-      warnings: ["조건에 맞는 상품이 없습니다."],
+      warnings: ["No products match the selected conditions."],
     };
   }
 
@@ -361,8 +361,8 @@ export function buildOptimalRoute(products, rawOptions) {
     },
     eligibleCount: eligibleProducts.length,
     warnings: [
-      "수수료, 출금 대기, KYC, 국가 제한, 상품 한도 변경은 계산에 포함되지 않습니다.",
-      "APY와 프로모션 조건은 데이터 갱신 시점마다 바뀔 수 있습니다.",
+      "Fees, withdrawal delays, KYC, country restrictions, and product limit changes are not included.",
+      "APY and promotion terms can change each time the data refreshes.",
     ],
   };
 }

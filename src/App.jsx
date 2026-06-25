@@ -124,9 +124,11 @@ export default function App() {
             <button
               type="button"
               className={`route-menu-button ${activeView === "route" ? "active" : ""}`}
-              onClick={() => setActiveView("route")}
+              onClick={() =>
+                setActiveView((view) => (view === "route" ? "dashboard" : "route"))
+              }
             >
-              AI 추천 루트
+              {activeView === "route" ? "Back to List" : "AI Route"}
             </button>
           </nav>
           <div className="header-meta">
@@ -149,7 +151,6 @@ export default function App() {
             products={data?.products ?? []}
             stableCoins={stableCoins}
             meta={meta}
-            onBack={() => setActiveView("dashboard")}
           />
         ) : (
           <Dashboard
