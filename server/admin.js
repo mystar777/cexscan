@@ -166,7 +166,8 @@ function pageShell({ title, body }) {
     .country-row { display: grid; grid-template-columns: minmax(10rem, 1.1fr) minmax(8rem, 1fr) 4rem 3rem; align-items: center; gap: 12px; padding: 11px 16px; border-bottom: 1px solid rgba(48,54,61,.72); }
     .country-row:last-child { border-bottom: 0; }
     .country-name { display: inline-flex; align-items: center; min-width: 0; gap: 10px; }
-    .country-flag { width: 1.45rem; text-align: center; font-size: 1.1rem; }
+    .country-flag { width: 24px; height: 18px; object-fit: cover; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,.12); flex-shrink: 0; }
+    .country-flag-fallback { width: 24px; color: var(--muted); text-align: center; font-size: .9rem; flex-shrink: 0; }
     .country-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .country-bar { height: 7px; border-radius: 999px; background: rgba(88,166,255,.06); overflow: hidden; }
     .country-bar span { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, #58a6ff, #a371f7); }
@@ -243,11 +244,20 @@ function countryDisplayName(country) {
   return COUNTRY_NAMES[country] ?? country;
 }
 
-function countryFlag(country) {
-  if (!/^[A-Z]{2}$/.test(country ?? "")) return "-";
-  return String.fromCodePoint(
-    ...[...country].map((char) => 127397 + char.charCodeAt(0)),
-  );
+function countryFlagCode(country) {
+  if (country === "UK") return "GB";
+  return country;
+}
+
+function countryFlagHtml(country) {
+  const code = countryFlagCode(country);
+  if (!/^[A-Z]{2}$/.test(code ?? "")) {
+    return `<span class="country-flag-fallback" aria-hidden="true">-</span>`;
+  }
+
+  const lowerCode = code.toLowerCase();
+  const label = countryDisplayName(country);
+  return `<img class="country-flag" src="https://flagcdn.com/24x18/${lowerCode}.png" srcset="https://flagcdn.com/48x36/${lowerCode}.png 2x" alt="${escapeHtml(label)} flag" loading="lazy" decoding="async" />`;
 }
 
 function renderCountryVisitors(summary, range) {
@@ -261,7 +271,7 @@ function renderCountryVisitors(summary, range) {
           const percent = total > 0 ? Math.round((row.count / total) * 100) : 0;
           return `<li class="country-row">
             <div class="country-name">
-              <span class="country-flag">${escapeHtml(countryFlag(row.country))}</span>
+              ${countryFlagHtml(row.country)}
               <span class="country-label">${escapeHtml(countryDisplayName(row.country))}</span>
             </div>
             <div class="country-bar"><span style="width:${percent}%"></span></div>
