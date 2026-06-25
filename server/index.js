@@ -78,7 +78,9 @@ app.get("/api/out/:exchangeId", (req, res) => {
     return;
   }
 
-  recordExchangeClick(req, exchange.name);
+  recordExchangeClick(req, exchange.name).catch((err) => {
+    console.warn(`[analytics] click record failed: ${err.message}`);
+  });
   res.redirect(302, exchange.referralUrl);
 });
 
@@ -95,7 +97,11 @@ app.post("/api/refresh", async (_req, res) => {
 if (isProd) {
   const dist = path.join(__dirname, "..", "dist");
   app.use((req, _res, next) => {
-    if (shouldRecordAccess(req)) recordAccess(req);
+    if (shouldRecordAccess(req)) {
+      recordAccess(req).catch((err) => {
+        console.warn(`[analytics] access record failed: ${err.message}`);
+      });
+    }
     next();
   });
   app.use(express.static(dist));

@@ -1,12 +1,17 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { DATA_DIR } from "./cache.js";
 
 const ANALYTICS_PATH = path.join(DATA_DIR, "admin-analytics.json");
+const GEO_CACHE_PATH = path.join(DATA_DIR, "geo-cache.json");
 const MAX_EVENTS = 20000;
 const TIME_ZONE = "Asia/Seoul";
+const GEO_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const GEO_LOOKUP_TIMEOUT_MS = 1500;
 
 let analyticsCache = null;
+let geoCache = null;
 
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -44,6 +49,31 @@ function loadAnalytics() {
   return analyticsCache;
 }
 
+function loadGeoCache() {
+  if (geoCache) return geoCache;
+  ensureDataDir();
+
+  if (!fs.existsSync(GEO_CACHE_PATH)) {
+    geoCache = {};
+    return geoCache;
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(GEO_CACHE_PATH, "utf8"));
+    geoCache = parsed && typeof parsed === "object" ? parsed : {};
+  } catch (err) {
+    console.warn(`[analytics] geo cache reset after read failure: ${err.message}`);
+    geoCache = {};
+  }
+
+  return geoCache;
+}
+
+function saveGeoCache(cache) {
+  ensureDataDir();
+  fs.writeFileSync(GEO_CACHE_PATH, JSON.stringify(cache, null, 2));
+}
+
 function saveAnalytics(analytics) {
   ensureDataDir();
   analytics.updatedAt = new Date().toISOString();
@@ -68,20 +98,117 @@ function normalizeCountry(value) {
   return cleaned.slice(0, 40);
 }
 
-function getCountry(req) {
+function getHeaderCountry(req) {
   return normalizeCountry(
     headerValue(req, "cf-ipcountry") ||
       headerValue(req, "x-vercel-ip-country") ||
       headerValue(req, "x-country-code") ||
-      headerValue(req, "x-forwarded-country") ||
-      inferCountryFromLanguage(headerValue(req, "accept-language")),
+      headerValue(req, "x-forwarded-country"),
   );
+}
+
+function getLanguageCountry(req) {
+  return normalizeCountry(inferCountryFromLanguage(headerValue(req, "accept-language")));
 }
 
 function inferCountryFromLanguage(value) {
   if (typeof value !== "string") return null;
   const match = value.match(/(?:^|,)\s*[a-z]{2,3}-([A-Za-z]{2})\b/);
   return match?.[1] ?? null;
+}
+
+function normalizeIp(value) {
+  if (typeof value !== "string") return null;
+  let ip = value.split(",")[0]?.trim();
+  if (!ip) return null;
+  if (ip.startsWith("::ffff:")) ip = ip.slice(7);
+  if (ip.includes(":") && ip.includes(".")) ip = ip.split(":").at(-1);
+  return ip || null;
+}
+
+function getClientIp(req) {
+  return (
+    normalizeIp(headerValue(req, "cf-connecting-ip")) ||
+    normalizeIp(headerValue(req, "x-real-ip")) ||
+    normalizeIp(headerValue(req, "x-forwarded-for")) ||
+    normalizeIp(req.ip) ||
+    normalizeIp(req.socket?.remoteAddress)
+  );
+}
+
+function isPublicIp(ip) {
+  if (!ip) return false;
+  const v4 = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4) {
+    const parts = v4.slice(1).map(Number);
+    if (parts.some((part) => part < 0 || part > 255)) return false;
+    const [a, b] = parts;
+    if (a === 10 || a === 127 || a === 0) return false;
+    if (a === 172 && b >= 16 && b <= 31) return false;
+    if (a === 192 && b === 168) return false;
+    if (a === 169 && b === 254) return false;
+    return true;
+  }
+
+  const lower = ip.toLowerCase();
+  if (lower === "::1" || lower.startsWith("fc") || lower.startsWith("fd")) return false;
+  if (lower.startsWith("fe80:")) return false;
+  return lower.includes(":");
+}
+
+function geoCacheKey(ip) {
+  return crypto.createHash("sha256").update(ip).digest("hex").slice(0, 32);
+}
+
+async function lookupCountryByIp(ip) {
+  if (!isPublicIp(ip)) return null;
+
+  const cache = loadGeoCache();
+  const key = geoCacheKey(ip);
+  const cached = cache[key];
+  if (cached?.country && Number(cached.expiresAt) > Date.now()) {
+    return cached.country;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GEO_LOOKUP_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(
+      `https://ipwho.is/${encodeURIComponent(ip)}?fields=success,country_code`,
+      { signal: controller.signal },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const country = normalizeCountry(data?.success ? data.country_code : null);
+    if (country !== "Unknown") {
+      cache[key] = {
+        country,
+        expiresAt: Date.now() + GEO_CACHE_TTL_MS,
+        updatedAt: new Date().toISOString(),
+      };
+      saveGeoCache(cache);
+      return country;
+    }
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.warn(`[analytics] geo lookup failed: ${err.message}`);
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  return null;
+}
+
+async function getCountry(req) {
+  const headerCountry = getHeaderCountry(req);
+  if (headerCountry !== "Unknown") return headerCountry;
+
+  const ipCountry = await lookupCountryByIp(getClientIp(req));
+  if (ipCountry) return ipCountry;
+
+  return getLanguageCountry(req);
 }
 
 function getTimestampParts(ts) {
@@ -154,27 +281,29 @@ function withinLast24Hours(event) {
   return new Date(event.ts).getTime() >= Date.now() - 24 * 60 * 60 * 1000;
 }
 
-export function recordAccess(req) {
+export async function recordAccess(req) {
   const analytics = loadAnalytics();
+  const country = await getCountry(req);
   analytics.access = trimEvents([
     ...analytics.access,
     {
       ts: new Date().toISOString(),
       path: req.originalUrl || req.url || "/",
-      country: getCountry(req),
+      country,
     },
   ]);
   saveAnalytics(analytics);
 }
 
-export function recordExchangeClick(req, exchange) {
+export async function recordExchangeClick(req, exchange) {
   const analytics = loadAnalytics();
+  const country = await getCountry(req);
   analytics.clicks = trimEvents([
     ...analytics.clicks,
     {
       ts: new Date().toISOString(),
       exchange,
-      country: getCountry(req),
+      country,
     },
   ]);
   saveAnalytics(analytics);
