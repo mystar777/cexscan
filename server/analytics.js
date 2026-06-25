@@ -221,6 +221,11 @@ export function getAnalyticsSummary(exchanges = []) {
       byDate: buildRows(access, (event) => event.date, "date"),
       byHour: buildRows(access, (event) => event.hour, "hour"),
       byCountry: buildRows(access, (event) => event.country, "country"),
+      byCountryToday: buildRows(
+        access.filter((event) => event.date === today),
+        (event) => event.country,
+        "country",
+      ),
       recent: access.slice(-20).reverse(),
     },
   };

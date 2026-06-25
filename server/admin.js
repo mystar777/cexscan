@@ -7,6 +7,31 @@ const ADMIN_PASSWORD = "dudguslcjswo12#$";
 const SESSION_SECRET = "cexscan-admin-session-v1-dudguslcjswo12#$";
 const SESSION_COOKIE = "cexscan_admin";
 const SESSION_MAX_AGE_SECONDS = 12 * 60 * 60;
+const COUNTRY_NAMES = {
+  AU: "Australia",
+  BD: "Bangladesh",
+  BR: "Brazil",
+  CA: "Canada",
+  CN: "China",
+  DE: "Germany",
+  FR: "France",
+  HK: "Hong Kong",
+  HU: "Hungary",
+  IN: "India",
+  JP: "Japan",
+  KR: "South Korea",
+  NL: "Netherlands",
+  NO: "Norway",
+  RO: "Romania",
+  RU: "Russia",
+  SG: "Singapore",
+  TH: "Thailand",
+  UA: "Ukraine",
+  UK: "United Kingdom",
+  GB: "United Kingdom",
+  US: "United States",
+  VN: "Vietnam",
+};
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -131,6 +156,22 @@ function pageShell({ title, body }) {
     .panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--panel-2); }
     .panel-head h2 { margin: 0; }
     .panel-head span { color: var(--muted); font-size: .8rem; }
+    .country-card { margin-top: 16px; background: linear-gradient(180deg, #151a23 0%, #11161d 100%); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .country-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: rgba(13,17,23,.46); }
+    .country-head h2 { margin: 0; }
+    .country-tabs { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); }
+    .country-tab { min-width: 72px; padding: 6px 10px; border-radius: 999px; color: var(--muted); text-align: center; text-decoration: none; font-size: .82rem; font-weight: 700; }
+    .country-tab.active { color: var(--text); background: rgba(255,255,255,.08); }
+    .country-list { list-style: none; margin: 0; padding: 0; }
+    .country-row { display: grid; grid-template-columns: minmax(10rem, 1.1fr) minmax(8rem, 1fr) 4rem 3rem; align-items: center; gap: 12px; padding: 11px 16px; border-bottom: 1px solid rgba(48,54,61,.72); }
+    .country-row:last-child { border-bottom: 0; }
+    .country-name { display: inline-flex; align-items: center; min-width: 0; gap: 10px; }
+    .country-flag { width: 1.45rem; text-align: center; font-size: 1.1rem; }
+    .country-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .country-bar { height: 7px; border-radius: 999px; background: rgba(88,166,255,.06); overflow: hidden; }
+    .country-bar span { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, #58a6ff, #a371f7); }
+    .country-count { text-align: right; font-variant-numeric: tabular-nums; }
+    .country-percent { text-align: right; color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
     .table-scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: .86rem; }
     th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
@@ -142,10 +183,16 @@ function pageShell({ title, body }) {
     @media (max-width: 840px) {
       .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .topbar { align-items: flex-start; flex-direction: column; }
+      .country-row { grid-template-columns: minmax(8rem, 1fr) minmax(5rem, .8fr) 3.5rem 2.8rem; padding-inline: 12px; }
     }
     @media (max-width: 520px) {
       .wrap { width: min(100% - 20px, 1400px); padding-top: 18px; }
       .grid { grid-template-columns: 1fr; }
+      .country-head { grid-template-columns: 1fr; }
+      .country-tabs { width: 100%; }
+      .country-tab { flex: 1; }
+      .country-row { grid-template-columns: minmax(0, 1fr) 4rem 2.8rem; gap: 8px; }
+      .country-bar { grid-column: 1 / -1; grid-row: 2; }
     }
   </style>
 </head>
@@ -191,6 +238,52 @@ function panel(title, subtitle, rows, columns, emptyText) {
   </section>`;
 }
 
+function countryDisplayName(country) {
+  if (!country || country === "Unknown") return "Unknown / Internal";
+  return COUNTRY_NAMES[country] ?? country;
+}
+
+function countryFlag(country) {
+  if (!/^[A-Z]{2}$/.test(country ?? "")) return "-";
+  return String.fromCodePoint(
+    ...[...country].map((char) => 127397 + char.charCodeAt(0)),
+  );
+}
+
+function renderCountryVisitors(summary, range) {
+  const isToday = range === "today";
+  const rows = isToday ? summary.access.byCountryToday : summary.access.byCountry;
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
+
+  const content = rows.length
+    ? `<ul class="country-list">${rows
+        .map((row) => {
+          const percent = total > 0 ? Math.round((row.count / total) * 100) : 0;
+          return `<li class="country-row">
+            <div class="country-name">
+              <span class="country-flag">${escapeHtml(countryFlag(row.country))}</span>
+              <span class="country-label">${escapeHtml(countryDisplayName(row.country))}</span>
+            </div>
+            <div class="country-bar"><span style="width:${percent}%"></span></div>
+            <strong class="country-count">${row.count}</strong>
+            <span class="country-percent">${percent}%</span>
+          </li>`;
+        })
+        .join("")}</ul>`
+    : `<div class="empty">No country traffic yet.</div>`;
+
+  return `<section class="country-card">
+    <div class="country-head">
+      <h2>Visitors by Country</h2>
+      <nav class="country-tabs" aria-label="Visitors by country range">
+        <a class="country-tab ${isToday ? "active" : ""}" href="/adm?countryRange=today" rel="nofollow">Today</a>
+        <a class="country-tab ${isToday ? "" : "active"}" href="/adm?countryRange=all" rel="nofollow">All-time</a>
+      </nav>
+    </div>
+    ${content}
+  </section>`;
+}
+
 function renderLogin(error = "") {
   return pageShell({
     title: "CEXScan Admin Login",
@@ -211,8 +304,9 @@ function renderLogin(error = "") {
   });
 }
 
-function renderAdmin() {
+function renderAdmin(req) {
   const summary = getAnalyticsSummary(EXCHANGES);
+  const countryRange = req.query?.countryRange === "today" ? "today" : "all";
   const clickColumns = [
     { key: "exchange", label: "Exchange" },
     { key: "total", label: "Total", className: "num" },
@@ -308,6 +402,7 @@ function renderAdmin() {
         <div class="metric"><span>Views last 24h</span><strong>${summary.access.last24h}</strong></div>
       </section>
 
+      ${renderCountryVisitors(summary, countryRange)}
       ${panel("Exchange click stats", "By exchange", summary.clicks.exchangeRows, clickColumns)}
       ${panel("Click totals by date", "Exchange/date", clickDateRows, exchangeBreakdownColumns)}
       ${panel("Click totals by hour", "Exchange/hour", clickHourRows, exchangeBreakdownColumns)}
@@ -334,7 +429,7 @@ export function handleAdminPage(req, res) {
     res.status(401).type("html").send(renderLogin());
     return;
   }
-  res.type("html").send(renderAdmin());
+  res.type("html").send(renderAdmin(req));
 }
 
 export function handleAdminLogin(req, res) {
