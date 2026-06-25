@@ -27,6 +27,25 @@ function TypeBadge({ type }) {
   return <span className={`type-badge ${type}`}>{type}</span>;
 }
 
+function getEligibilityText(row) {
+  if (row.eligibility?.summary) return row.eligibility.summary;
+  const requirements = Array.isArray(row.eligibility?.requirements)
+    ? row.eligibility.requirements
+    : [];
+  if (requirements.length) return `Eligibility: ${requirements.join("; ")}`;
+  return row.restricted ? "Restricted eligibility." : "";
+}
+
+function RestrictedBadge({ row }) {
+  const text = getEligibilityText(row);
+  if (!text) return null;
+  return (
+    <span className="type-badge restricted" title={text}>
+      Restricted
+    </span>
+  );
+}
+
 function PoolAsset({ asset, tiered }) {
   return (
     <div className="pool-asset">
@@ -52,7 +71,8 @@ function SourceTags({ row }) {
 }
 
 function NoteCell({ row }) {
-  const text = row.note ?? "Notice";
+  const eligibilityText = getEligibilityText(row);
+  const text = [row.note ?? "Notice", eligibilityText].filter(Boolean).join(" | ");
   const href = row.announcementUrl || row.sourceUrl;
   if (href) {
     return (
@@ -61,7 +81,7 @@ function NoteCell({ row }) {
         target="_blank"
         rel="noopener noreferrer"
         className="ann-link"
-        title={row.note || "View notice"}
+        title={text || "View notice"}
       >
         {text}
       </a>
@@ -147,7 +167,10 @@ export default function ProductsTable({ rows, sort, onSort }) {
                     <ExchangeLink exchange={row.exchange} size="sm" />
                   </td>
                   <td className="cell-nowrap">
-                    <TypeBadge type={row.productType} />
+                    <div className="type-stack">
+                      <TypeBadge type={row.productType} />
+                      <RestrictedBadge row={row} />
+                    </div>
                   </td>
                   <td className="duration-cell cell-nowrap">{row.duration}</td>
                   <td className="apy-cell cell-nowrap">{formatApy(row)}</td>
@@ -190,6 +213,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
               <div className="card-row">
                 <span className="card-label">Type</span>
                 <TypeBadge type={row.productType} />
+                <RestrictedBadge row={row} />
                 <span className="card-duration">{row.duration}</span>
               </div>
               <div className="card-row">
@@ -200,7 +224,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
                 <span className="card-label spaced">Source</span>
                 <SourceTags row={row} />
               </div>
-              {(row.note || row.announcementUrl) && (
+              {(row.note || row.announcementUrl || row.restricted) && (
                 <div className="card-note muted">
                   <NoteCell row={row} />
                 </div>

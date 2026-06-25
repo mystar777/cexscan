@@ -15,6 +15,18 @@ const APY_REGEX =
 const DURATION_REGEX =
   /\b(\d+)\s*[- ]?days?\b|flexible|locked|fixed\s*term/i;
 
+const BINANCE_CIS_USDT_ELIGIBILITY = {
+  label: "CIS-region Binance promo",
+  summary:
+    "Restricted to CIS users outside Ukraine who completed KYC and had not used Simple Earn Flexible before Jun 18, 2026.",
+  requirements: [
+    "CIS region users only",
+    "Ukraine excluded",
+    "KYC completed",
+    "No Simple Earn Flexible usage before Jun 18, 2026",
+  ],
+};
+
 /**
  * @param {string} exchange
  * @param {{ title: string, description?: string, url?: string, publishedAt?: string }[]} announcements
@@ -50,6 +62,8 @@ export function parseAnnouncementProducts(exchange, announcements) {
       const apy = pickApyForAsset(text, asset, apyValues);
       if (apy == null || apy <= 0) continue;
 
+      const specialOffer = getSpecialOfferDetails(exchange, ann, asset, apy);
+
       const key = `${exchange}:${asset}:${durationLabel}:${apy}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -61,7 +75,7 @@ export function parseAnnouncementProducts(exchange, announcements) {
         product({
           exchange,
           asset,
-          productType: durationDays === 0 ? "flexible" : "promo",
+          productType: specialOffer?.productType ?? (durationDays === 0 ? "flexible" : "promo"),
           duration: durationLabel,
           durationDays,
           apy,
@@ -69,14 +83,44 @@ export function parseAnnouncementProducts(exchange, announcements) {
           apyMax: apy,
           note: shortTitle,
           source: "announcement",
+          sourceId: specialOffer?.sourceId ?? null,
           announcementUrl: ann.url || null,
           publishedAt: ann.publishedAt || null,
+          eligibility: specialOffer?.eligibility ?? null,
+          eligibilityTags: specialOffer?.eligibilityTags ?? [],
+          restricted: Boolean(specialOffer),
         }),
       );
     }
   }
 
   return results;
+}
+
+function getSpecialOfferDetails(exchange, ann, asset, apy) {
+  const text = `${ann.title || ""} ${ann.description || ""}`;
+  const isBinanceCisUsdt =
+    exchange === "Binance" &&
+    asset === "USDT" &&
+    apy >= 34.99 &&
+    apy <= 35.01 &&
+    /cis\s+exclusive/i.test(text) &&
+    /simple\s+earn/i.test(text);
+
+  if (!isBinanceCisUsdt) return null;
+
+  const urlCode = ann.url?.split("/").filter(Boolean).pop();
+  return {
+    productType: "promo",
+    sourceId: urlCode || "binance-cis-usdt-simple-earn",
+    eligibility: BINANCE_CIS_USDT_ELIGIBILITY,
+    eligibilityTags: [
+      "cis-region-only",
+      "ukraine-excluded",
+      "kyc-required",
+      "new-simple-earn-flexible-user",
+    ],
+  };
 }
 
 function extractApyValues(text) {

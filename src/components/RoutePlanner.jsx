@@ -11,6 +11,25 @@ function TypePill({ type }) {
   return <span className={`route-type ${type || "flexible"}`}>{type || "earn"}</span>;
 }
 
+function getEligibilityText(product) {
+  if (product.eligibility?.summary) return product.eligibility.summary;
+  const requirements = Array.isArray(product.eligibility?.requirements)
+    ? product.eligibility.requirements
+    : [];
+  if (requirements.length) return `Eligibility: ${requirements.join("; ")}`;
+  return product.restricted ? "Restricted eligibility." : "";
+}
+
+function RestrictedPill({ product }) {
+  const text = getEligibilityText(product);
+  if (!text) return null;
+  return (
+    <span className="route-type restricted" title={text}>
+      Restricted
+    </span>
+  );
+}
+
 function ProductSourceLink({ product }) {
   const href = product.announcementUrl || product.sourceUrl;
   if (!href) return null;
@@ -32,6 +51,7 @@ function RouteStep({ step, index }) {
             Day {step.dayStart} - {step.dayEnd}
           </span>
           <TypePill type={product.productType} />
+          <RestrictedPill product={product} />
         </div>
         <div className="route-step-exchange">
           <ExchangeLink exchange={product.exchange} size="sm" />
@@ -43,7 +63,11 @@ function RouteStep({ step, index }) {
             Move from {step.transferFrom} to {product.exchange}
           </p>
         )}
-        {product.note && <p className="route-note">{product.note}</p>}
+        {[product.note, getEligibilityText(product)].filter(Boolean).length > 0 && (
+          <p className="route-note">
+            {[product.note, getEligibilityText(product)].filter(Boolean).join(" | ")}
+          </p>
+        )}
       </div>
       <div className="route-step-values">
         <strong>{formatCurrency(step.amount, 0)}</strong>
@@ -74,6 +98,7 @@ export default function RoutePlanner({ products, stableCoins, meta }) {
   const [isNewUser, setIsNewUser] = useState(true);
   const [includePromos, setIncludePromos] = useState(true);
   const [includeVip, setIncludeVip] = useState(false);
+  const [includeRestricted, setIncludeRestricted] = useState(false);
 
   const assetOptions = useMemo(() => {
     const fromProducts = products.map((product) => product.asset).filter(Boolean);
@@ -90,8 +115,18 @@ export default function RoutePlanner({ products, stableCoins, meta }) {
         isNewUser,
         includePromos,
         includeVip,
+        includeRestricted,
       }),
-    [products, capitalValue, horizonDays, asset, isNewUser, includePromos, includeVip],
+    [
+      products,
+      capitalValue,
+      horizonDays,
+      asset,
+      isNewUser,
+      includePromos,
+      includeVip,
+      includeRestricted,
+    ],
   );
 
   return (
@@ -183,6 +218,15 @@ export default function RoutePlanner({ products, stableCoins, meta }) {
             onChange={(event) => setIncludeVip(event.target.checked)}
           />
           <span>Include VIP</span>
+        </label>
+
+        <label className="route-check">
+          <input
+            type="checkbox"
+            checked={includeRestricted}
+            onChange={(event) => setIncludeRestricted(event.target.checked)}
+          />
+          <span>Include restricted</span>
         </label>
       </form>
 

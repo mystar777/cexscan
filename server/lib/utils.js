@@ -65,8 +65,14 @@ export function product({
   sourceUrl,
   announcementUrl,
   publishedAt,
+  eligibility,
+  eligibilityTags,
+  restricted,
 }) {
   const durationLabel = duration || (durationDays ? `${durationDays} days` : "Flexible");
+  const normalizedEligibilityTags = Array.isArray(eligibilityTags)
+    ? eligibilityTags.filter(Boolean)
+    : [];
   return {
     id: makeId(exchange, asset, productType, durationLabel, sourceId),
     exchange,
@@ -86,6 +92,9 @@ export function product({
     sourceUrl: sourceUrl ?? null,
     announcementUrl: announcementUrl ?? null,
     publishedAt: publishedAt ?? null,
+    eligibility: eligibility ?? null,
+    eligibilityTags: normalizedEligibilityTags,
+    restricted: Boolean(restricted || eligibility || normalizedEligibilityTags.length),
     updatedAt: new Date().toISOString(),
   };
 }

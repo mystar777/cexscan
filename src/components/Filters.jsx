@@ -16,6 +16,8 @@ export default function Filters({
   onDurationChange,
   productTypeFilter,
   onProductTypeChange,
+  eligibilityFilter,
+  onEligibilityChange,
   onReset,
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,7 +48,8 @@ export default function Filters({
     selectedCoins.length +
     selectedExchanges.length +
     (durationFilter !== "all" ? 1 : 0) +
-    (productTypeFilter !== "all" ? 1 : 0);
+    (productTypeFilter !== "all" ? 1 : 0) +
+    (eligibilityFilter !== "all" ? 1 : 0);
 
   return (
     <section className="filters">
@@ -110,6 +113,18 @@ export default function Filters({
               <option value="onchain">On-chain</option>
               <option value="locked">Locked</option>
               <option value="promo">Promo</option>
+            </select>
+          </label>
+
+          <label className="filter-group">
+            <span className="filter-label">Eligibility</span>
+            <select
+              value={eligibilityFilter}
+              onChange={(e) => onEligibilityChange(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="standard">Standard only</option>
+              <option value="restricted">Restricted only</option>
             </select>
           </label>
 

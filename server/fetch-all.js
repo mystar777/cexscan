@@ -36,6 +36,16 @@ function sourceKind(source) {
   return "api";
 }
 
+function mergeRestrictedMeta(target, source) {
+  if (source.eligibility && !target.eligibility) {
+    target.eligibility = source.eligibility;
+  }
+
+  const tags = new Set([...(target.eligibilityTags ?? []), ...(source.eligibilityTags ?? [])]);
+  target.eligibilityTags = [...tags];
+  target.restricted = Boolean(target.restricted || source.restricted || target.eligibilityTags.length);
+}
+
 /** Prefer direct products; fill gaps from announcements; merge by exchange+asset+type+duration */
 function mergeProducts(directProducts, annProducts) {
   const map = new Map();
@@ -58,6 +68,7 @@ function mergeProducts(directProducts, annProducts) {
       if (!existing.sources.includes("announcement")) {
         existing.sources.push("announcement");
       }
+      mergeRestrictedMeta(existing, p);
       if ((p.apyMax ?? 0) > (existing.apyMax ?? 0)) {
         existing.annNote = p.note;
         existing.announcementUrl = p.announcementUrl ?? existing.announcementUrl;

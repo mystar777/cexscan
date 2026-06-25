@@ -27,6 +27,14 @@ function getNote(product) {
   return String(product.note ?? "");
 }
 
+function isRestrictedProduct(product) {
+  return Boolean(
+    product.restricted ||
+      product.eligibility ||
+      (Array.isArray(product.eligibilityTags) && product.eligibilityTags.length),
+  );
+}
+
 function isNewUserOnly(product) {
   return NEW_USER_RE.test(getNote(product));
 }
@@ -78,6 +86,7 @@ function normalizeProduct(product) {
     highApyCapacity: getHighApyCapacity(product),
     newUserOnly: isNewUserOnly(product),
     vipOnly: isVipOnly(product),
+    restrictedOnly: isRestrictedProduct(product),
     oneTime: isOneTime(product),
   };
 }
@@ -114,6 +123,7 @@ function isEligibleProduct(product, options) {
   if (!options.includePromos && product.productType === "promo") return false;
   if (!options.isNewUser && product.newUserOnly) return false;
   if (!options.includeVip && product.vipOnly) return false;
+  if (!options.includeRestricted && product.restrictedOnly) return false;
   return true;
 }
 
@@ -296,6 +306,7 @@ export function buildOptimalRoute(products, rawOptions) {
     horizonDays: 30,
     includePromos: true,
     includeVip: false,
+    includeRestricted: false,
     isNewUser: true,
     ...rawOptions,
   };
@@ -361,9 +372,11 @@ export function buildOptimalRoute(products, rawOptions) {
     },
     eligibleCount: eligibleProducts.length,
     warnings: [
+      !options.includeRestricted &&
+        "Region- or eligibility-restricted offers are excluded unless enabled.",
       "Fees, withdrawal delays, KYC, country restrictions, and product limit changes are not included.",
       "APY and promotion terms can change each time the data refreshes.",
-    ],
+    ].filter(Boolean),
   };
 }
 

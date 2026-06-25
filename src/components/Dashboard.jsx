@@ -12,6 +12,7 @@ export default function Dashboard({ products, exchangeStatus, exchanges, stableC
   const [selectedExchanges, setSelectedExchanges] = useState([]);
   const [durationFilter, setDurationFilter] = useState("all");
   const [productTypeFilter, setProductTypeFilter] = useState("all");
+  const [eligibilityFilter, setEligibilityFilter] = useState("all");
   const [sort, setSort] = useState(DEFAULT_SORT);
 
   const filtered = useMemo(() => {
@@ -31,13 +32,27 @@ export default function Dashboard({ products, exchangeStatus, exchanges, stableC
     if (productTypeFilter !== "all") {
       list = list.filter((p) => p.productType === productTypeFilter);
     }
+    if (eligibilityFilter === "standard") {
+      list = list.filter((p) => !p.restricted);
+    } else if (eligibilityFilter === "restricted") {
+      list = list.filter((p) => p.restricted);
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
-        (p) =>
-          p.asset.toLowerCase().includes(q) ||
-          p.exchange.toLowerCase().includes(q) ||
-          p.duration.toLowerCase().includes(q),
+        (p) => {
+          const requirements = Array.isArray(p.eligibility?.requirements)
+            ? p.eligibility.requirements
+            : [];
+          return (
+            p.asset.toLowerCase().includes(q) ||
+            p.exchange.toLowerCase().includes(q) ||
+            p.duration.toLowerCase().includes(q) ||
+            (p.note ?? "").toLowerCase().includes(q) ||
+            (p.eligibility?.summary ?? "").toLowerCase().includes(q) ||
+            requirements.join(" ").toLowerCase().includes(q)
+          );
+        },
       );
     }
 
@@ -63,6 +78,7 @@ export default function Dashboard({ products, exchangeStatus, exchanges, stableC
     selectedExchanges,
     durationFilter,
     productTypeFilter,
+    eligibilityFilter,
     search,
     sort,
   ]);
@@ -119,12 +135,15 @@ export default function Dashboard({ products, exchangeStatus, exchanges, stableC
         onDurationChange={setDurationFilter}
         productTypeFilter={productTypeFilter}
         onProductTypeChange={setProductTypeFilter}
+        eligibilityFilter={eligibilityFilter}
+        onEligibilityChange={setEligibilityFilter}
         onReset={() => {
           setSearch("");
           setSelectedCoins([]);
           setSelectedExchanges([]);
           setDurationFilter("all");
           setProductTypeFilter("all");
+          setEligibilityFilter("all");
           setSort(DEFAULT_SORT);
         }}
       />
