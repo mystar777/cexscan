@@ -26,6 +26,7 @@ Compare stablecoin staking APY across major centralized exchanges in one place.
 | Kraken | Stablecoin Rewards support article |
 | Crypto.com | Crypto Earn page reward list |
 | LBank | Spot Earn and Locked Earn public page hydration data |
+| BingX | Wealth Earn signed public product endpoint discovered from the Earn page bundle |
 | Coinbase | Public Earn page text; falls back to a read-only rendered page mirror when Cloudflare blocks direct fetch |
 | KuCoin | Hold to Earn public page text; falls back to a read-only rendered page mirror for client-rendered rows |
 | Binance | Simple Earn public table via rendered-page fallback, plus announcement parsing for promotions |
@@ -33,7 +34,7 @@ Compare stablecoin staking APY across major centralized exchanges in one place.
 ## Automation notes
 
 - Prefer official public JSON APIs when available: Bybit, OKX, Gate.io.
-- When APIs are private or undocumented, parse stablecoin rows from public Earn pages or their embedded hydration data: Bitget, MEXC, HTX, Crypto.com.
+- When APIs are private or undocumented, parse stablecoin rows from public Earn pages, embedded hydration data, or page-discovered signed endpoints: Bitget, MEXC, HTX, Crypto.com, LBank, BingX.
 - For pages blocked by WAF or rendered after hydration, use a read-only rendered-page fallback only for public page text: Binance, Coinbase, KuCoin.
 - Keep announcement parsing as a safety net for promotions and exchanges whose complete Earn data is not exposed publicly.
 - The production Node server does not run an internal 30-minute cron. A Codex automation triggers the full refresh process and the app reads the refreshed cache on demand.

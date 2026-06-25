@@ -62,6 +62,11 @@ export const EXCHANGE_META = {
     icon: "/exchanges/lbank.png",
     referralUrl: "https://www.lbk.pub/signup/a?icode=46I0M",
   },
+  BingX: {
+    id: "bingx",
+    icon: "/exchanges/bingx.png",
+    referralUrl: "https://bingx.com/en/rewards?ref=ERIDRQTR",
+  },
 };
 
 export function getExchangeMeta(name) {

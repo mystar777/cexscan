@@ -11,6 +11,7 @@ export const EXCHANGES = [
   { id: "mexc", name: "MEXC", rank: 9, color: "#1972E2" },
   { id: "cryptocom", name: "Crypto.com", rank: 10, color: "#1199FA" },
   { id: "lbank", name: "LBank", rank: 11, color: "#1F7BFF" },
+  { id: "bingx", name: "BingX", rank: 12, color: "#0F5FFF" },
 ];
 
 export const STABLE_COINS = [

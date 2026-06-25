@@ -147,7 +147,7 @@ export default function App() {
         <p>
           Synced every 30 min by Codex automation via public APIs, exchange Earn pages,
           and notices. Sources include Bybit, OKX, Gate.io, Bitget, MEXC, HTX,
-          Kraken, Crypto.com, and LBank where publicly available.
+          Kraken, Crypto.com, LBank, and BingX where publicly available.
         </p>
       </footer>
     </div>

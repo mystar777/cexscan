@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from "node:crypto";
 import { isStableCoin, parseAprString, product } from "../lib/utils.js";
 import {
   extractNextData,
@@ -88,6 +89,133 @@ function extractJsonArray(text, propName) {
 
 function extractFlightArray(html, propName) {
   return extractJsonArray(decodeNextFlight(html), propName) ?? [];
+}
+
+function cleanBingxSignObject(value) {
+  if (Array.isArray(value)) {
+    for (let i = value.length - 1; i >= 0; i--) {
+      const item = value[i];
+      if (item && typeof item === "object") cleanBingxSignObject(item);
+      if (
+        (item && typeof item === "object" && !Object.keys(item).length) ||
+        item == null ||
+        (typeof item === "number" && Number.isNaN(item))
+      ) {
+        value.splice(i, 1);
+      }
+    }
+    return value;
+  }
+
+  if (value && typeof value === "object") {
+    for (const [key, item] of Object.entries(value)) {
+      if (item && typeof item === "object") cleanBingxSignObject(item);
+      if (
+        (item && typeof item === "object" && !Object.keys(item).length) ||
+        item == null ||
+        (typeof item === "number" && Number.isNaN(item))
+      ) {
+        delete value[key];
+      }
+    }
+  }
+
+  return value;
+}
+
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item) ?? "null").join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => {
+        const stringified = stableStringify(value[key]);
+        return stringified ? `${JSON.stringify(key)}:${stringified}` : null;
+      })
+      .filter(Boolean)
+      .join(",")}}`;
+  }
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "null";
+  if (value !== undefined) return JSON.stringify(value);
+  return undefined;
+}
+
+function normalizeBingxSignObject(value) {
+  if (value && typeof value === "object") {
+    for (const key of Object.keys(value)) {
+      if (typeof value[key] === "object") {
+        value[key] = normalizeBingxSignObject(value[key]);
+      }
+      if (typeof value[key] === "number" || typeof value[key] === "boolean") {
+        value[key] =
+          typeof value[key] === "number"
+            ? value[key].toString().toUpperCase()
+            : value[key].toString();
+      }
+    }
+  }
+  return value;
+}
+
+function bingxApiSign({
+  timestamp,
+  traceId,
+  deviceId,
+  platformId,
+  appVersion,
+  antiDeviceId = "",
+  requestPayload = {},
+}) {
+  const payloadCopy = JSON.parse(JSON.stringify(requestPayload ?? {}));
+  const payload =
+    payloadCopy && typeof payloadCopy === "object" && JSON.stringify(payloadCopy) !== "{}"
+      ? stableStringify(normalizeBingxSignObject(cleanBingxSignObject(payloadCopy)))
+      : "{}";
+  const content =
+    `95d65c73dc5c4370ae9018fb7f2eab69${timestamp}${traceId}` +
+    `${deviceId}${platformId}${appVersion}${antiDeviceId}${payload}`;
+
+  return createHash("sha256").update(content).digest("hex").toUpperCase();
+}
+
+function bingxApiHeaders(params = {}) {
+  const timestamp = Date.now();
+  const traceId = randomUUID().replace(/-/g, "").toLowerCase();
+  const deviceId = randomUUID().replace(/-/g, "").toLowerCase();
+  const platformId = 30;
+  const appVersion = "5.3.5";
+  const antiDeviceId = "";
+
+  return {
+    "X-Requested-With": "XMLHttpRequest",
+    Origin: "https://bingx.com",
+    Referer: "https://bingx.com/en/wealth/earn",
+    platformId: String(platformId),
+    appSiteId: "0",
+    channel: "official",
+    reg_channel: "official",
+    app_version: appVersion,
+    device_id: deviceId,
+    lang: "en-001",
+    appId: "30004",
+    mainAppId: "10009",
+    timeZone: "9",
+    device_brand: "Windows_Chrome_124.0",
+    antiDeviceId,
+    traceId,
+    timestamp: String(timestamp),
+    sign: bingxApiSign({
+      timestamp,
+      traceId,
+      deviceId,
+      platformId,
+      appVersion,
+      antiDeviceId,
+      requestPayload: params,
+    }),
+  };
 }
 
 function parseCoinbaseUsdcApy(text) {
@@ -680,6 +808,93 @@ export async function fetchLbank() {
 
   return {
     exchange: "LBank",
+    products: uniqBy(products, (p) => p.id),
+    errors,
+  };
+}
+
+function bingxTierDetails(item) {
+  return (item.tieredApyRule?.rules ?? [])
+    .map((tier) => ({
+      min: toNumber(tier.low),
+      max: toNumber(tier.high),
+      apy: parseAprString(tier.apy),
+    }))
+    .filter((tier) => tier.apy != null);
+}
+
+function bingxProductType(item, tagLabels) {
+  if (tagLabels.some((tag) => /new user|vip|limited time/i.test(tag))) {
+    return "promo";
+  }
+  if (item.productType === 2 || Number(item.duration) === -1) return "flexible";
+  if (item.productType === 1) return "locked";
+  return null;
+}
+
+export async function fetchBingx() {
+  const sourceUrl = "https://bingx.com/en/wealth/earn";
+  const endpoint = "https://api-app.qq-os.com/api/wealth-sales-trading/v1/product/list";
+  const products = [];
+  const errors = [];
+
+  try {
+    const data = await fetchSiteJson(endpoint, {
+      headers: bingxApiHeaders(),
+    });
+    if (data.code !== 0 || !Array.isArray(data.data?.result)) {
+      throw new Error(`Invalid BingX product response: ${data.msg ?? data.code}`);
+    }
+
+    for (const group of data.data.result) {
+      const asset = String(group.assetName ?? "").toUpperCase();
+      if (!isStableCoin(asset)) continue;
+
+      for (const item of group.products ?? []) {
+        if (item.soldOut) continue;
+
+        const tagLabels = (item.tags ?? [])
+          .map((tag) => tag.tagDesc)
+          .filter(Boolean);
+        const normalizedType = bingxProductType(item, tagLabels);
+        if (!normalizedType) continue;
+
+        const rawDuration = Number(item.duration);
+        const flexible = item.productType === 2 || rawDuration === -1;
+        const durationDays = flexible ? 0 : Number.isFinite(rawDuration) ? rawDuration : null;
+        const tiers = bingxTierDetails(item);
+        const fallbackApy = parseAprString(item.apy);
+        const { apyMin, apyMax } = apyRangeFromTiers(tiers, fallbackApy, fallbackApy);
+        if (apyMax == null || apyMax <= 0) continue;
+
+        const redeemNote = item.allowRedeem ? "; redeem anytime" : "";
+        const tagNote = tagLabels.length ? `; ${tagLabels.join(", ")}` : "";
+
+        products.push(
+          product({
+            exchange: "BingX",
+            asset,
+            productType: normalizedType,
+            duration: flexible ? "Flexible" : `${durationDays} days`,
+            durationDays,
+            apy: apyMax,
+            apyMin,
+            apyMax,
+            tierDetails: tiers.length ? tiers : null,
+            note: `BingX Earn${tagNote}${redeemNote}`,
+            source: "site:bingx-earn",
+            sourceId: `earn-${item.productId ?? `${asset}-${item.productType}-${item.duration}`}`,
+            sourceUrl,
+          }),
+        );
+      }
+    }
+  } catch (err) {
+    errors.push(err.message);
+  }
+
+  return {
+    exchange: "BingX",
     products: uniqBy(products, (p) => p.id),
     errors,
   };

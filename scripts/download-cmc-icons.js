@@ -24,6 +24,7 @@ const EXCHANGES = {
   mexc: "mexc",
   "crypto-com-exchange": "cryptocom",
   lbank: "lbank",
+  bingx: "bingx",
 };
 
 const UA = "Mozilla/5.0 (compatible; cex-staking-icon-fetch/1.0)";
