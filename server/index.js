@@ -25,6 +25,7 @@ const PORT = process.env.PORT || 3344;
 const isProd = process.env.NODE_ENV === "production";
 
 const app = express();
+app.disable("x-powered-by");
 app.set("trust proxy", "loopback");
 app.use(cors());
 app.use(express.json());
