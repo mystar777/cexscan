@@ -58,7 +58,7 @@ export async function refreshCache() {
   const snapshot = await fetchAllProducts();
   const completedAt = new Date();
   snapshot.meta.fetchedAt = completedAt.toISOString();
-  snapshot.meta.nextFetchAt = computeNextFetchAt(completedAt).toISOString();
+  snapshot.meta.nextFetchAt = computeNextFetchAt(completedAt, FETCH_INTERVAL_MINUTES).toISOString();
   snapshot.meta.intervalMinutes = FETCH_INTERVAL_MINUTES;
 
   fs.writeFileSync(CACHE_PATH, JSON.stringify(snapshot, null, 2));

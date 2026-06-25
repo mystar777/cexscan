@@ -34,4 +34,4 @@ export const STABLE_COINS = [
   "QCAD",
 ];
 
-export const FETCH_INTERVAL_MINUTES = 30;
+export const FETCH_INTERVAL_MINUTES = 60;

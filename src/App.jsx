@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Dashboard from "./components/Dashboard";
+import RoutePlanner from "./components/RoutePlanner";
 import { formatDateTime } from "./lib/format.js";
 import "./App.css";
 
@@ -41,6 +42,7 @@ export default function App() {
   const [visitorStats, setVisitorStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeView, setActiveView] = useState("dashboard");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,6 +120,15 @@ export default function App() {
               </p>
             </div>
           </div>
+          <nav className="header-nav" aria-label="Primary">
+            <button
+              type="button"
+              className={`route-menu-button ${activeView === "route" ? "active" : ""}`}
+              onClick={() => setActiveView("route")}
+            >
+              AI 추천 루트
+            </button>
+          </nav>
           <div className="header-meta">
             {meta?.fetchedAt && (
               <span className="meta-pill">
@@ -133,6 +144,13 @@ export default function App() {
         {error && <div className="banner error">{error}</div>}
         {loading && !data ? (
           <div className="loading">Loading data...</div>
+        ) : activeView === "route" ? (
+          <RoutePlanner
+            products={data?.products ?? []}
+            stableCoins={stableCoins}
+            meta={meta}
+            onBack={() => setActiveView("dashboard")}
+          />
         ) : (
           <Dashboard
             products={data?.products ?? []}
@@ -145,7 +163,7 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Synced every 30 min by Codex automation via public APIs, exchange Earn pages,
+          Synced every 1 hour by Codex automation via public APIs, exchange Earn pages,
           and notices. Sources include Bybit, OKX, Gate.io, Bitget, MEXC, HTX,
           Kraken, Crypto.com, LBank, and BingX where publicly available.
         </p>
