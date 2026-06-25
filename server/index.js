@@ -4,6 +4,15 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readCache, refreshCache } from "./cache.js";
 import { EXCHANGES, STABLE_COINS } from "./config.js";
+import { EXCHANGE_META } from "../src/lib/exchanges.js";
+import { recordAccess, recordExchangeClick } from "./analytics.js";
+import {
+  handleAdminAnalytics,
+  handleAdminLogin,
+  handleAdminLogout,
+  handleAdminPage,
+  noIndexAdmin,
+} from "./admin.js";
 import {
   broadcastSnapshot,
   getVisitorStats,
@@ -16,8 +25,27 @@ const PORT = process.env.PORT || 3344;
 const isProd = process.env.NODE_ENV === "production";
 
 const app = express();
+app.set("trust proxy", "loopback");
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(noIndexAdmin);
+
+const exchangeById = new Map(
+  Object.entries(EXCHANGE_META).map(([name, meta]) => [meta.id, { name, ...meta }]),
+);
+
+function shouldRecordAccess(req) {
+  if (req.method !== "GET") return false;
+  if (req.path.startsWith("/api") || req.path.startsWith("/adm")) return false;
+  if (path.extname(req.path)) return false;
+  return true;
+}
+
+app.get(["/adm", "/adm/"], handleAdminPage);
+app.post("/adm/login", handleAdminLogin);
+app.post("/adm/logout", handleAdminLogout);
+app.get("/api/admin/analytics", handleAdminAnalytics);
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
@@ -43,6 +71,17 @@ app.get("/api/visitor-stats", (_req, res) => {
 
 app.get("/api/events", handleEvents);
 
+app.get("/api/out/:exchangeId", (req, res) => {
+  const exchange = exchangeById.get(req.params.exchangeId);
+  if (!exchange?.referralUrl) {
+    res.status(404).json({ error: "Unknown exchange" });
+    return;
+  }
+
+  recordExchangeClick(req, exchange.name);
+  res.redirect(302, exchange.referralUrl);
+});
+
 app.post("/api/refresh", async (_req, res) => {
   try {
     const snapshot = await refreshCache();
@@ -55,6 +94,10 @@ app.post("/api/refresh", async (_req, res) => {
 
 if (isProd) {
   const dist = path.join(__dirname, "..", "dist");
+  app.use((req, _res, next) => {
+    if (shouldRecordAccess(req)) recordAccess(req);
+    next();
+  });
   app.use(express.static(dist));
   app.get("*", (_req, res) => {
     res.sendFile(path.join(dist, "index.html"));

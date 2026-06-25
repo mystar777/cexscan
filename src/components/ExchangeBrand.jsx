@@ -28,7 +28,7 @@ export function ExchangeLink({ exchange, size = "md" }) {
   if (meta.referralUrl) {
     return (
       <a
-        href={meta.referralUrl}
+        href={`/api/out/${encodeURIComponent(meta.id)}`}
         className={className}
         target="_blank"
         rel="noopener noreferrer"
