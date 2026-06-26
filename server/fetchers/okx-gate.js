@@ -1,8 +1,9 @@
-import { isStableCoin, product, fetchJson } from "../lib/utils.js";
+import { isStableCoin, parseAprString, product, fetchJson } from "../lib/utils.js";
 
 export async function fetchOkx() {
   const results = [];
   const errors = [];
+  const sourceUrl = "https://www.okx.com/earn/simple-earn";
 
   try {
     const data = await fetchJson(
@@ -28,11 +29,71 @@ export async function fetchOkx() {
           apyMin: rate * 100,
           apyMax: rate * 100,
           source: "okx:flexible-savings",
+          sourceUrl,
         }),
       );
     }
   } catch (err) {
     errors.push(err.message);
+  }
+
+  try {
+    const data = await fetchJson(
+      "https://www.okx.com/priapi/v1/earn/simple-earn/all-products",
+      {
+        headers: {
+          Referer: sourceUrl,
+        },
+      },
+    );
+    if (data.code !== 0 || !data.data) {
+      throw new Error(data.msg || "Invalid OKX Simple Earn response");
+    }
+
+    const currencies = [
+      ...(data.data.flexibleProducts?.currencies ?? []),
+      ...(data.data.fixedProducts?.currencies ?? []),
+    ];
+
+    for (const currency of currencies) {
+      const asset = String(currency.investCurrency?.currencyName ?? "").toUpperCase();
+      if (!isStableCoin(asset)) continue;
+
+      for (const item of currency.products ?? []) {
+        if (item.purchaseStatus != null && Number(item.purchaseStatus) !== 1) continue;
+
+        const apys = (item.rate?.rateNum?.value ?? [])
+          .map((value) => parseAprString(value))
+          .filter((value) => value != null && value > 0);
+        if (!apys.length) continue;
+
+        const apyMin = Math.min(...apys);
+        const apyMax = Math.max(...apys);
+        const productsType = Number(item.productsType);
+        const fixed = productsType === 66;
+        const promo = /new users?/i.test(item.bonusDescription ?? "");
+        const days = fixed ? Number(item.term?.value) : 0;
+
+        results.push(
+          product({
+            exchange: "OKX",
+            asset,
+            productType: promo ? "promo" : fixed ? "locked" : "flexible",
+            duration: fixed && Number.isFinite(days) ? `${days} days` : "Flexible",
+            durationDays: fixed && Number.isFinite(days) ? days : 0,
+            apy: apyMax,
+            apyMin,
+            apyMax,
+            note: `OKX Simple Earn${item.bonusDescription ? `; ${item.bonusDescription}` : ""}`,
+            source: "site:okx-simple-earn",
+            sourceId: `simple-${asset}-${item.productsType}-${item.type}`,
+            sourceUrl,
+          }),
+        );
+      }
+    }
+  } catch (err) {
+    errors.push(`simple earn: ${err.message}`);
   }
 
   return { exchange: "OKX", products: results, errors };

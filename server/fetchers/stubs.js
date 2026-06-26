@@ -21,6 +21,11 @@ function toNumber(value) {
   return Number.isFinite(num) ? num : null;
 }
 
+function decimalRateToPercent(value) {
+  const num = toNumber(value);
+  return num == null ? null : num * 100;
+}
+
 function apyRangeFromTiers(tiers, fallbackMin, fallbackMax) {
   const values = tiers.map((t) => t.apy).filter((v) => v != null);
   if (!values.length) {
@@ -233,8 +238,61 @@ function parseCoinbaseUsdcApy(text) {
 
 export async function fetchBinance() {
   const sourceUrl = "https://www.binance.com/en/earn/simple-earn";
+  const apiUrl =
+    "https://www.binance.com/bapi/earn/v1/friendly/pos/union?pageSize=100&pageIndex=1";
   const products = [];
   const errors = [];
+
+  try {
+    const data = await fetchSiteJson(apiUrl, {
+      headers: {
+        Referer: sourceUrl,
+      },
+    });
+    if (data.code !== "000000" || !Array.isArray(data.data)) {
+      throw new Error(data.message || "Invalid Binance Simple Earn response");
+    }
+
+    for (const group of data.data) {
+      const asset = String(group.asset ?? "").toUpperCase();
+      if (!isStableCoin(asset)) continue;
+
+      for (const project of group.projects ?? []) {
+        if (project.display === false) continue;
+        if (project.status && project.status !== "PURCHASING") continue;
+        if (project.sellOut) continue;
+
+        const apy = decimalRateToPercent(
+          project.config?.annualInterestRate ?? group.annualInterestRate,
+        );
+        if (apy == null || apy <= 0) continue;
+
+        const days = Number(project.duration);
+        const locked = Number.isFinite(days) && days > 0;
+
+        products.push(
+          product({
+            exchange: "Binance",
+            asset,
+            productType: locked ? "locked" : "flexible",
+            duration: locked ? `${days} days` : "Flexible",
+            durationDays: locked ? days : 0,
+            apy,
+            apyMin: apy,
+            apyMax: apy,
+            minAmount: project.config?.minPurchaseAmount ?? group.minPurchaseAmount,
+            maxAmount: project.config?.maxPurchaseAmountPerUser ?? null,
+            note: `Binance Simple Earn ${locked ? "locked" : "flexible"}`,
+            source: "site:binance-simple-earn-api",
+            sourceId: project.projectId ?? `${asset}-${project.type ?? "earn"}-${days || "flex"}`,
+            sourceUrl,
+          }),
+        );
+      }
+    }
+  } catch (err) {
+    errors.push(`product api: ${err.message}`);
+  }
 
   try {
     const markdown = await fetchSiteText(readableMirrorUrl(sourceUrl));
@@ -455,6 +513,7 @@ export async function fetchKraken() {
 
 export async function fetchKucoin() {
   const sourceUrl = "https://www.kucoin.com/earn/hold-to-earn";
+  const earnUrl = "https://www.kucoin.com/earn";
   const products = [];
   const errors = [];
 
@@ -496,10 +555,108 @@ export async function fetchKucoin() {
     errors.push("KuCoin Hold to Earn page loaded but no stablecoin APR rows were found");
   }
 
+  try {
+    const markdown = await fetchSiteText(readableMirrorUrl(earnUrl));
+    const featuredRe =
+      /(?:!\[[^\]]*]\([^)]+\)\s*)+([A-Z0-9]+)\s+(?:(High Profit)\s+)?(Simple Earn|Staking)\s+(Flexible|\d+\s+days)\s+Reference AP[RY]\s+([0-9]+(?:\.[0-9]+)?)%/g;
+
+    for (const match of markdown.matchAll(featuredRe)) {
+      const asset = match[1].toUpperCase();
+      if (!isStableCoin(asset)) continue;
+
+      const duration = match[4].replace(/\s+/g, " ").trim();
+      const apy = parseAprString(match[5]);
+      if (apy == null || apy <= 0) continue;
+
+      const days = parseDurationDays(duration);
+      const campaignRate = Boolean(match[2]) || apy >= 20;
+      const eligibility = campaignRate ? kucoinCampaignEligibility() : null;
+
+      products.push(
+        product({
+          exchange: "KuCoin",
+          asset,
+          productType: campaignRate ? "promo" : days === 0 ? "flexible" : "locked",
+          duration,
+          durationDays: days,
+          apy,
+          apyMin: apy,
+          apyMax: apy,
+          note: `KuCoin Earn featured ${match[3]}${campaignRate ? "; campaign rate" : ""}`,
+          source: "site:kucoin-earn",
+          sourceId: `featured-${asset}-${duration}-${apy}`,
+          sourceUrl: earnUrl,
+          eligibility: eligibility?.details ?? null,
+          eligibilityTags: eligibility?.tags ?? [],
+          restricted: Boolean(eligibility),
+        }),
+      );
+    }
+
+    const summaryRe =
+      /\|\s*(?:!\[[^\]]*]\([^)]+\)\s*)?([A-Z0-9]+)\s*\|\s*([0-9]+(?:\.[0-9]+)?)%\s*(?:~\s*([0-9]+(?:\.[0-9]+)?)%)?\s*\|\s*([^|]+?)\s*\|/g;
+
+    for (const match of markdown.matchAll(summaryRe)) {
+      const asset = match[1].toUpperCase();
+      if (!isStableCoin(asset)) continue;
+
+      const apyMin = parseAprString(match[2]);
+      const apyMax = parseAprString(match[3] ?? match[2]);
+      if (apyMax == null || apyMax <= 0) continue;
+
+      const duration = match[4].trim().replace(/\s+/g, " ");
+      const campaignRate = apyMax >= 20;
+      const eligibility = campaignRate ? kucoinCampaignEligibility() : null;
+
+      products.push(
+        product({
+          exchange: "KuCoin",
+          asset,
+          productType: campaignRate ? "promo" : "flexible",
+          duration,
+          durationDays: parseDurationDays(duration),
+          apy: apyMax,
+          apyMin,
+          apyMax,
+          note: `KuCoin Smart Earn reference APR range${campaignRate ? "; campaign rate may apply" : ""}`,
+          source: "site:kucoin-earn",
+          sourceId: `summary-${asset}-${duration}`,
+          sourceUrl: earnUrl,
+          eligibility: eligibility?.details ?? null,
+          eligibilityTags: eligibility?.tags ?? [],
+          restricted: Boolean(eligibility),
+        }),
+      );
+    }
+  } catch (err) {
+    errors.push(`earn: ${err.message}`);
+  }
+
   return {
     exchange: "KuCoin",
-    products,
+    products: uniqBy(products, (p) => p.id),
     errors,
+  };
+}
+
+function parseDurationDays(duration) {
+  if (/flexible/i.test(duration) && !/fixed|locked/i.test(duration)) return 0;
+  const match = String(duration).match(/(\d+)\s*days?/i);
+  return match ? Number(match[1]) : null;
+}
+
+function kucoinCampaignEligibility() {
+  return {
+    details: {
+      label: "KuCoin Earn campaign rate",
+      summary:
+        "High-profit KuCoin Earn rates may require campaign eligibility, quotas, or limited-time availability.",
+      requirements: [
+        "Confirm campaign eligibility on the KuCoin Earn product page",
+        "Check per-user quota and availability before subscribing",
+      ],
+    },
+    tags: ["campaign-rate"],
   };
 }
 

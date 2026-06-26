@@ -27,12 +27,14 @@ export const STABLE_COINS = [
   "PYUSD",
   "BUSD",
   "USDD",
+  "USDS",
   "USD",
   "USDGO",
   "USDG",
   "USDP",
   "APXUSD",
   "QCAD",
+  "U",
 ];
 
 export const FETCH_INTERVAL_MINUTES = 60;

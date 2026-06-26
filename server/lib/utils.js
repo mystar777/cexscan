@@ -10,12 +10,14 @@ const STABLE_SET = new Set([
   "BUSD",
   "USDD",
   "USD1",
+  "USDS",
   "USD",
   "USDGO",
   "USDG",
   "USDP",
   "APXUSD",
   "QCAD",
+  "U",
 ]);
 
 export function isStableCoin(symbol) {
