@@ -1,4 +1,5 @@
 import { isStableCoin, parseAprString, product, fetchJson } from "../lib/utils.js";
+import { fetchSiteText, stripHtml } from "../lib/site-utils.js";
 
 export async function fetchOkx() {
   const results = [];
@@ -94,6 +95,51 @@ export async function fetchOkx() {
     }
   } catch (err) {
     errors.push(`simple earn: ${err.message}`);
+  }
+
+  try {
+    const html = await fetchSiteText(sourceUrl);
+    const text = stripHtml(html);
+    const rowRe =
+      /\b([A-Z0-9]+)\b\s+([0-9]+(?:\.[0-9]+)?)%\s+(Flexible\/Fixed|Flexible|Fixed)/g;
+
+    for (const match of text.matchAll(rowRe)) {
+      const asset = match[1].toUpperCase();
+      if (!isStableCoin(asset)) continue;
+      if (
+        results.some(
+          (item) =>
+            item.source === "site:okx-simple-earn" &&
+            item.productType === "promo" &&
+            item.asset === asset,
+        )
+      ) {
+        continue;
+      }
+
+      const apy = parseAprString(match[2]);
+      if (apy == null || apy <= 0) continue;
+      const duration = match[3];
+
+      results.push(
+        product({
+          exchange: "OKX",
+          asset,
+          productType: "promo",
+          duration,
+          durationDays: duration === "Flexible" ? 0 : null,
+          apy,
+          apyMin: apy,
+          apyMax: apy,
+          note: "OKX Simple Earn public table; bonus APR may apply",
+          source: "site:okx-simple-earn",
+          sourceId: `simple-table-${asset}-${duration}`,
+          sourceUrl,
+        }),
+      );
+    }
+  } catch (err) {
+    errors.push(`simple earn page: ${err.message}`);
   }
 
   return { exchange: "OKX", products: results, errors };
