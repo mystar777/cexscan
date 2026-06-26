@@ -1,4 +1,4 @@
-import { isStableCoin, hourlyToApy, product, fetchJson } from "../lib/utils.js";
+import { isStableCoin, product, fetchJson } from "../lib/utils.js";
 
 export async function fetchOkx() {
   const results = [];
@@ -43,36 +43,218 @@ export async function fetchGate() {
   const errors = [];
 
   try {
-    const data = await fetchJson("https://api.gateio.ws/api/v4/earn/uni/currencies");
-    if (!Array.isArray(data)) {
-      return { exchange: "Gate.io", products: [], errors: ["Invalid response"] };
-    }
+    const market = await fetchGateSimpleEarnMarket();
 
-    for (const item of data) {
-      if (!isStableCoin(item.currency)) continue;
-      const maxApy = hourlyToApy(item.max_rate);
-      const minApy = hourlyToApy(item.min_rate);
-
-      results.push(
-        product({
-          exchange: "Gate.io",
-          asset: item.currency,
-          productType: "flexible",
-          duration: "Flexible",
-          durationDays: 0,
-          apy: maxApy,
-          apyMin: minApy,
-          apyMax: maxApy,
-          minAmount: item.min_lend_amount,
-          maxAmount: item.max_lend_amount,
-          note: "Simple Earn — rate varies by pool utilization",
-          source: "gate:uni-lend",
-        }),
-      );
+    for (const item of market) {
+      if (!isStableCoin(item.asset)) continue;
+      results.push(...buildGateProducts(item));
     }
   } catch (err) {
     errors.push(err.message);
   }
 
   return { exchange: "Gate.io", products: results, errors };
+}
+
+const GATE_SIMPLE_EARN_URL = "https://www.gate.com/simple-earn";
+const GATE_MARKET_URL = "https://www.gate.com/apiw/v2/uni-loan/earn/market/list";
+const GATE_PAGE_LIMIT = 200;
+const GATE_BUSINESS_FIXED = 1;
+const GATE_FIXED_SUBSCRIBE_ABLE = 1;
+const GATE_PRODUCT_NORMAL = 1;
+
+async function fetchGateSimpleEarnMarket() {
+  const rows = [];
+
+  for (let page = 1; page <= 10; page++) {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(GATE_PAGE_LIMIT),
+      have_balance: "2",
+      have_award: "0",
+      is_subscribed: "0",
+      sort_business: "1",
+      search_type: "0",
+    });
+    const data = await fetchJson(`${GATE_MARKET_URL}?${params}`, {
+      headers: {
+        Referer: GATE_SIMPLE_EARN_URL,
+      },
+    });
+    if (data?.code !== 0 || !Array.isArray(data?.data?.list)) {
+      throw new Error(data?.message || "Gate Simple Earn market response is invalid");
+    }
+
+    rows.push(...data.data.list);
+    const total = Number(data.data.total ?? 0);
+    if (data.data.list.length < GATE_PAGE_LIMIT || rows.length >= total) break;
+  }
+
+  return rows;
+}
+
+function buildGateProducts(item) {
+  return [
+    buildGateFlexibleProduct(item),
+    ...buildGateFixedProducts(item),
+  ].filter(Boolean);
+}
+
+function buildGateFlexibleProduct(item) {
+  if (Number(item.business_type) === GATE_BUSINESS_FIXED) return null;
+
+  const baseApy = parseGateAnnualRate(item.next_time_rate_year ?? item.year_rate);
+  const apyMax = Math.max(
+    parseGateAnnualRate(item.max_year_rate) ?? 0,
+    parseGateAnnualRate(item.year_rate) ?? 0,
+    baseApy ?? 0,
+  );
+  if (!Number.isFinite(apyMax) || apyMax <= 0) return null;
+
+  const tierDetails = buildGateFlexibleTiers(item, baseApy, apyMax);
+  const noteParts = ["Gate Simple Earn Flexible"];
+  if (item.award_asset && parseGateAnnualRate(item.ext_award_rate_year) > 0) {
+    noteParts.push(`includes ${item.award_asset} bonus APR`);
+  }
+
+  return product({
+    exchange: "Gate.io",
+    asset: item.asset,
+    productType: "flexible",
+    duration: "Flexible",
+    durationDays: 0,
+    apy: apyMax,
+    apyMin: parseGateAnnualRate(item.min_lend_rate_year ?? item.next_time_rate_year),
+    apyMax,
+    tierDetails,
+    note: noteParts.join("; "),
+    source: "site:gate-simple-earn",
+    sourceId: `simple-flex-${item.asset}`,
+    sourceUrl: GATE_SIMPLE_EARN_URL,
+  });
+}
+
+function buildGateFixedProducts(item) {
+  if (!Array.isArray(item.fixed_list)) return [];
+
+  return item.fixed_list
+    .filter((fixed) => {
+      return (
+        Number(fixed.sale_status) === GATE_FIXED_SUBSCRIBE_ABLE &&
+        String(fixed.show_page ?? "1") === "1"
+      );
+    })
+    .map((fixed) => {
+      const apyMax = parseGateAnnualRate(fixed.max_year_rate ?? fixed.year_rate);
+      const apyMin = parseGateAnnualRate(fixed.min_lend_rate_year || fixed.year_rate);
+      if (!Number.isFinite(apyMax) || apyMax <= 0) return null;
+
+      const days = Number(fixed.lock_up_period);
+      const productType = Number(fixed.type) === GATE_PRODUCT_NORMAL ? "locked" : "promo";
+      const note = buildGateFixedNote(fixed);
+      const eligibility = getGateFixedEligibility(fixed);
+
+      return product({
+        exchange: "Gate.io",
+        asset: fixed.asset || item.asset,
+        productType,
+        duration: Number.isFinite(days) && days > 0 ? `${days} days` : "Fixed",
+        durationDays: Number.isFinite(days) && days > 0 ? days : null,
+        apy: apyMax,
+        apyMin,
+        apyMax,
+        minAmount: fixed.min_lend_amount || null,
+        maxAmount: normalizePositiveAmount(fixed.user_max_lend_volume),
+        note,
+        source: "site:gate-simple-earn",
+        sourceId: `simple-fixed-${fixed.id}`,
+        sourceUrl: GATE_SIMPLE_EARN_URL,
+        eligibility: eligibility?.details ?? null,
+        eligibilityTags: eligibility?.tags ?? [],
+        restricted: Boolean(eligibility),
+      });
+    })
+    .filter(Boolean);
+}
+
+function buildGateFlexibleTiers(item, baseApy, apyMax) {
+  if (!Array.isArray(item.ladder_apr) || !item.ladder_apr.length) return null;
+
+  const tiers = item.ladder_apr
+    .map((tier) => {
+      const min = Number(tier.left ?? 0);
+      const max = normalizePositiveAmount(tier.right);
+      const bonusApy = parseGateAnnualRate(tier.apr);
+      if (!Number.isFinite(bonusApy)) return null;
+      return {
+        min: Number.isFinite(min) ? min : 0,
+        max,
+        apy: (baseApy ?? 0) + bonusApy,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.min - b.min);
+
+  if (!tiers.length) return null;
+
+  const highestMax = tiers
+    .map((tier) => tier.max)
+    .filter((max) => Number.isFinite(max))
+    .sort((a, b) => b - a)[0];
+  if (Number.isFinite(highestMax) && Number.isFinite(baseApy) && baseApy > 0) {
+    tiers.push({ min: highestMax, max: null, apy: baseApy });
+  }
+
+  const bestTierApy = Math.max(...tiers.map((tier) => tier.apy));
+  if (Number.isFinite(apyMax) && apyMax > bestTierApy) {
+    tiers[0].apy = apyMax;
+  }
+
+  return tiers;
+}
+
+function buildGateFixedNote(fixed) {
+  const parts = ["Gate Simple Earn Fixed"];
+  if (fixed.title) parts.push(fixed.title);
+  if (fixed.subtitle) parts.push(fixed.subtitle);
+  if (Number(fixed.min_vip) > 0 || Number(fixed.max_vip) > 0) {
+    parts.push(`VIP ${fixed.min_vip}-${fixed.max_vip} only`);
+  }
+  if (fixed.bonus_type) parts.push("bonus APR may apply");
+  return parts.join("; ");
+}
+
+function getGateFixedEligibility(fixed) {
+  const requirements = [];
+  const text = `${fixed.title || ""} ${fixed.subtitle || ""}`;
+
+  if (/net\s+deposit/i.test(text) && fixed.subtitle) {
+    requirements.push(fixed.subtitle);
+  }
+  if (/white\s*list|whitelist/i.test(text)) {
+    requirements.push("Whitelist eligibility may be required");
+  }
+
+  if (!requirements.length) return null;
+
+  return {
+    details: {
+      label: "Gate Simple Earn special conditions",
+      summary: requirements.join("; "),
+      requirements,
+    },
+    tags: ["special-conditions"],
+  };
+}
+
+function parseGateAnnualRate(value) {
+  if (value == null || value === "") return null;
+  const rate = Number(value);
+  if (!Number.isFinite(rate)) return null;
+  return rate <= 1 ? rate * 100 : rate;
+}
+
+function normalizePositiveAmount(value) {
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
 }
