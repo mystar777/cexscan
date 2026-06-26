@@ -7,11 +7,12 @@ export const EXCHANGES = [
   { id: "bitget", name: "Bitget", rank: 5, color: "#00F0FF" },
   { id: "kraken", name: "Kraken", rank: 6, color: "#5741D9" },
   { id: "kucoin", name: "KuCoin", rank: 7, color: "#23AF91" },
-  { id: "htx", name: "HTX", rank: 8, color: "#2EBD85" },
-  { id: "mexc", name: "MEXC", rank: 9, color: "#1972E2" },
-  { id: "cryptocom", name: "Crypto.com", rank: 10, color: "#1199FA" },
-  { id: "lbank", name: "LBank", rank: 11, color: "#1F7BFF" },
-  { id: "bingx", name: "BingX", rank: 12, color: "#0F5FFF" },
+  { id: "gate", name: "Gate.io", rank: 8, color: "#17E6A1" },
+  { id: "htx", name: "HTX", rank: 9, color: "#2EBD85" },
+  { id: "mexc", name: "MEXC", rank: 10, color: "#1972E2" },
+  { id: "cryptocom", name: "Crypto.com", rank: 11, color: "#1199FA" },
+  { id: "lbank", name: "LBank", rank: 12, color: "#1F7BFF" },
+  { id: "bingx", name: "BingX", rank: 13, color: "#0F5FFF" },
 ];
 
 export const STABLE_COINS = [

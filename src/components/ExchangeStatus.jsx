@@ -18,13 +18,7 @@ function SourceBadge({ sources }) {
 
 export default function ExchangeStatus({ status, exchanges }) {
   const statusMap = Object.fromEntries(status.map((s) => [s.exchange, s]));
-
-  const allCards = [
-    ...exchanges.map((ex) => ({ ...ex, type: "exchange" })),
-    ...(statusMap["Gate.io"]?.ok
-      ? [{ id: "gate", name: "Gate.io", rank: null, color: "#17E6A1", type: "bonus" }]
-      : []),
-  ];
+  const allCards = exchanges.map((ex) => ({ ...ex, type: "exchange" }));
 
   return (
     <section className="exchange-status">
