@@ -299,6 +299,26 @@ function getAlternatives(products, capital, options, usedIds) {
     .slice(0, 4);
 }
 
+function buildTimeline(routes) {
+  return routes
+    .flatMap((route, routeIndex) =>
+      route.steps.map((step, stepIndex) => ({
+        routeIndex,
+        stepIndex,
+        step,
+      })),
+    )
+    .sort((a, b) => {
+      if (a.step.dayStart !== b.step.dayStart) return a.step.dayStart - b.step.dayStart;
+      if (a.step.dayEnd !== b.step.dayEnd) return a.step.dayEnd - b.step.dayEnd;
+      return a.routeIndex - b.routeIndex;
+    })
+    .map((item, index) => ({
+      ...item,
+      sequenceNumber: index + 1,
+    }));
+}
+
 export function buildOptimalRoute(products, rawOptions) {
   const capital = Number(rawOptions.capital);
   const options = {
@@ -356,9 +376,11 @@ export function buildOptimalRoute(products, rawOptions) {
   const totalProfit = routes.reduce((sum, route) => sum + route.totalProfit, 0);
   const finalAmount = routes.reduce((sum, route) => sum + route.finalAmount, 0);
   const usedIds = new Set(routes.flatMap((route) => route.steps.map((step) => step.product.id)));
+  const timeline = buildTimeline(routes);
 
   return {
     routes,
+    timeline,
     alternatives: getAlternatives(eligibleProducts, capital, options, usedIds),
     summary: {
       capital,
@@ -369,6 +391,8 @@ export function buildOptimalRoute(products, rawOptions) {
           ? (totalProfit / capital) * (365 / options.horizonDays) * 100
           : 0,
       horizonDays: options.horizonDays,
+      routeCount: routes.length,
+      stepCount: timeline.length,
     },
     eligibleCount: eligibleProducts.length,
     warnings: [

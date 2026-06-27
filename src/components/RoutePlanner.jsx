@@ -40,16 +40,17 @@ function ProductSourceLink({ product }) {
   );
 }
 
-function RouteStep({ step, index }) {
+function RouteStep({ step, sequenceNumber, allocationLabel }) {
   const { product } = step;
   return (
     <li className="route-step">
-      <div className="route-step-index">{index + 1}</div>
+      <div className="route-step-index">{sequenceNumber}</div>
       <div className="route-step-main">
         <div className="route-step-title">
           <span>
             Day {step.dayStart} - {step.dayEnd}
           </span>
+          {allocationLabel && <span className="route-lane">{allocationLabel}</span>}
           <TypePill type={product.productType} />
           <RestrictedPill product={product} />
         </div>
@@ -76,6 +77,17 @@ function RouteStep({ step, index }) {
       </div>
       <ProductSourceLink product={product} />
     </li>
+  );
+}
+
+function AllocationSummary({ route, index }) {
+  return (
+    <article className="route-allocation">
+      <span>Allocation {index + 1}</span>
+      <strong>{formatCurrency(route.initialAmount, 0)}</strong>
+      <em>+{formatCurrency(route.totalProfit)}</em>
+      <small>{route.steps.length} steps</small>
+    </article>
   );
 }
 
@@ -246,32 +258,37 @@ export default function RoutePlanner({ products, stableCoins, meta }) {
               <strong>{formatPercent(plan.summary.effectiveApy)}</strong>
             </div>
             <div className="route-stat">
-              <span>Products</span>
-              <strong>{plan.eligibleCount}</strong>
+              <span>Route steps</span>
+              <strong>{plan.summary.stepCount}</strong>
             </div>
           </div>
 
-          <div className="route-paths">
+          <div className="route-allocations">
             {plan.routes.map((route, routeIndex) => (
-              <article key={`${route.initialAmount}-${routeIndex}`} className="route-path">
-                <div className="route-path-head">
-                  <div>
-                    <span>Initial allocation</span>
-                    <strong>{formatCurrency(route.initialAmount, 0)}</strong>
-                  </div>
-                  <div>
-                    <span>Est. profit</span>
-                    <strong>+{formatCurrency(route.totalProfit)}</strong>
-                  </div>
-                </div>
-                <ol className="route-steps">
-                  {route.steps.map((step, index) => (
-                    <RouteStep key={step.id} step={step} index={index} />
-                  ))}
-                </ol>
-              </article>
+              <AllocationSummary
+                key={`${route.initialAmount}-${routeIndex}`}
+                route={route}
+                index={routeIndex}
+              />
             ))}
           </div>
+
+          <section className="route-timeline">
+            <div className="route-section-title">
+              <span>Recommended sequence</span>
+              <strong>{plan.summary.stepCount} steps</strong>
+            </div>
+            <ol className="route-steps">
+              {plan.timeline.map((item) => (
+                <RouteStep
+                  key={`${item.routeIndex}-${item.step.id}`}
+                  step={item.step}
+                  sequenceNumber={item.sequenceNumber}
+                  allocationLabel={`Allocation ${item.routeIndex + 1}`}
+                />
+              ))}
+            </ol>
+          </section>
 
           {plan.alternatives.length > 0 && (
             <section className="route-alternatives">

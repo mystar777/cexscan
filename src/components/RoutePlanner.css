@@ -24,7 +24,7 @@
 .route-updated,
 .route-field > span,
 .route-check,
-.route-path-head span,
+.route-allocation span,
 .route-stat span,
 .route-section-title span {
   color: var(--text-muted);
@@ -159,42 +159,40 @@
   color: var(--accent);
 }
 
-.route-paths {
+.route-allocations {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   gap: 0.75rem;
 }
 
-.route-path {
+.route-allocation {
   min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  padding: 0.85rem 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-elevated);
-  overflow: hidden;
 }
 
-.route-path-head {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-}
-
-.route-path-head div {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.route-path-head strong {
-  font-size: 1rem;
+.route-allocation strong {
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.route-allocation em {
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.route-allocation small {
+  justify-self: end;
+  color: var(--text-muted);
 }
 
 .route-steps,
@@ -204,9 +202,16 @@
   padding: 0;
 }
 
+.route-timeline {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
 .route-step {
   display: grid;
-  grid-template-columns: 1.6rem minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(1.6rem, auto) minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.75rem;
   padding: 0.85rem 1rem;
@@ -218,12 +223,14 @@
 }
 
 .route-step-index {
-  width: 1.6rem;
+  min-width: 1.6rem;
+  width: max-content;
   height: 1.6rem;
+  padding-inline: 0.45rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 1px solid rgba(63, 185, 80, 0.35);
   color: var(--accent);
   font-size: 0.75rem;
@@ -256,7 +263,8 @@
 }
 
 .route-asset,
-.route-duration {
+.route-duration,
+.route-lane {
   display: inline-flex;
   align-items: center;
   min-height: 1.35rem;
@@ -266,6 +274,12 @@
   color: var(--text-muted);
   font-size: 0.75rem;
   white-space: nowrap;
+}
+
+.route-lane {
+  color: var(--accent);
+  border: 1px solid rgba(63, 185, 80, 0.25);
+  background: rgba(63, 185, 80, 0.08);
 }
 
 .route-transfer {
@@ -446,12 +460,12 @@
     font-size: 1rem;
   }
 
-  .route-paths {
+  .route-allocations {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .route-step {
-    grid-template-columns: 1.45rem minmax(0, 1fr);
+    grid-template-columns: minmax(1.45rem, auto) minmax(0, 1fr);
     align-items: start;
     gap: 0.65rem;
     padding: 0.75rem 0.85rem;
