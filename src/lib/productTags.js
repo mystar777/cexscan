@@ -14,7 +14,23 @@ export const TYPE_TAG_LABELS = {
   "region-restricted": "Region",
   "vip": "VIP",
   "vip-only": "VIP",
+  restricted: "Restricted",
 };
+
+const TYPE_TAG_ORDER = [
+  "flexible",
+  "locked",
+  "fixed",
+  "onchain",
+  "promo",
+  "new-user",
+  "new-deposit",
+  "new-subscription",
+  "kyc-required",
+  "region-restricted",
+  "vip",
+  "restricted",
+];
 
 export function normalizeTag(tag) {
   return String(tag ?? "")
@@ -79,4 +95,38 @@ export function productHasAnyTag(product, tags) {
   ].map(normalizeTag);
 
   return values.some((value) => wanted.has(value));
+}
+
+export function productMatchesTypeTag(product, tag) {
+  const normalized = normalizeTag(tag);
+  if (!normalized || normalized === "all") return true;
+  if (normalized === "restricted") return Boolean(product?.restricted);
+  return productHasAnyTag(product, [normalized]);
+}
+
+export function getProductTypeFilterOptions(products) {
+  const options = new Map();
+
+  for (const product of products ?? []) {
+    for (const badge of getProductTypeBadges(product)) {
+      if (!badge.tag) continue;
+      options.set(badge.tag, { tag: badge.tag, label: badge.label });
+    }
+
+    if (product?.restricted) {
+      options.set("restricted", {
+        tag: "restricted",
+        label: getTagLabel("restricted"),
+      });
+    }
+  }
+
+  return [...options.values()].sort((a, b) => {
+    const ai = TYPE_TAG_ORDER.indexOf(a.tag);
+    const bi = TYPE_TAG_ORDER.indexOf(b.tag);
+    const ar = ai === -1 ? TYPE_TAG_ORDER.length : ai;
+    const br = bi === -1 ? TYPE_TAG_ORDER.length : bi;
+    if (ar !== br) return ar - br;
+    return a.label.localeCompare(b.label);
+  });
 }

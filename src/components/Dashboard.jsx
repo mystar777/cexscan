@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import Filters from "./Filters";
 import ProductsTable from "./ProductsTable";
 import ExchangeStatus from "./ExchangeStatus";
+import { getProductTypeFilterOptions, productMatchesTypeTag } from "../lib/productTags";
 import "./Dashboard.css";
 
 const DEFAULT_SORT = { key: "apy", dir: "desc" };
@@ -14,6 +15,11 @@ export default function Dashboard({ products, exchangeStatus, exchanges, stableC
   const [productTypeFilter, setProductTypeFilter] = useState("all");
   const [eligibilityFilter, setEligibilityFilter] = useState("all");
   const [sort, setSort] = useState(DEFAULT_SORT);
+
+  const productTypeOptions = useMemo(
+    () => getProductTypeFilterOptions(products),
+    [products],
+  );
 
   const filtered = useMemo(() => {
     let list = [...products];
@@ -30,7 +36,7 @@ export default function Dashboard({ products, exchangeStatus, exchanges, stableC
       list = list.filter((p) => p.durationDays > 0);
     }
     if (productTypeFilter !== "all") {
-      list = list.filter((p) => p.productType === productTypeFilter);
+      list = list.filter((p) => productMatchesTypeTag(p, productTypeFilter));
     }
     if (eligibilityFilter === "standard") {
       list = list.filter((p) => !p.restricted);
@@ -134,6 +140,7 @@ export default function Dashboard({ products, exchangeStatus, exchanges, stableC
         durationFilter={durationFilter}
         onDurationChange={setDurationFilter}
         productTypeFilter={productTypeFilter}
+        productTypeOptions={productTypeOptions}
         onProductTypeChange={setProductTypeFilter}
         eligibilityFilter={eligibilityFilter}
         onEligibilityChange={setEligibilityFilter}

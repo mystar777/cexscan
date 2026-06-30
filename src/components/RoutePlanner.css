@@ -370,6 +370,11 @@
   color: var(--warning);
 }
 
+.route-type.fixed {
+  border-color: #d29922;
+  color: var(--warning);
+}
+
 .route-type.promo {
   border-color: #a371f7;
   color: #d2a8ff;

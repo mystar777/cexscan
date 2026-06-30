@@ -1,6 +1,7 @@
 import { useState } from "react";
 import HorizontalCarousel from "./HorizontalCarousel";
 import { getExchangeMeta } from "../lib/exchanges";
+import { tagClassName } from "../lib/productTags";
 import "./Filters.css";
 
 export default function Filters({
@@ -15,6 +16,7 @@ export default function Filters({
   durationFilter,
   onDurationChange,
   productTypeFilter,
+  productTypeOptions = [],
   onProductTypeChange,
   eligibilityFilter,
   onEligibilityChange,
@@ -103,20 +105,6 @@ export default function Filters({
           </label>
 
           <label className="filter-group">
-            <span className="filter-label">Product type</span>
-            <select
-              value={productTypeFilter}
-              onChange={(e) => onProductTypeChange(e.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="flexible">Flexible Savings</option>
-              <option value="onchain">On-chain</option>
-              <option value="locked">Locked</option>
-              <option value="promo">Promo</option>
-            </select>
-          </label>
-
-          <label className="filter-group">
             <span className="filter-label">Eligibility</span>
             <select
               value={eligibilityFilter}
@@ -131,6 +119,30 @@ export default function Filters({
           <button type="button" className="btn-reset" onClick={onReset}>
             Reset filters
           </button>
+        </HorizontalCarousel>
+
+        <HorizontalCarousel label="Type" className="type-filter-carousel">
+          <button
+            type="button"
+            className={`type-chip all ${productTypeFilter === "all" ? "active" : ""}`}
+            onClick={() => onProductTypeChange("all")}
+          >
+            All
+          </button>
+          {productTypeOptions.map((option) => {
+            const active = productTypeFilter === option.tag;
+            return (
+              <button
+                key={option.tag}
+                type="button"
+                className={`type-chip ${tagClassName(option.tag)} ${active ? "active" : ""}`}
+                onClick={() => onProductTypeChange(option.tag)}
+                title={option.label}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </HorizontalCarousel>
 
         <HorizontalCarousel label="Coins">

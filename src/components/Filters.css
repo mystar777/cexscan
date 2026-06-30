@@ -142,6 +142,96 @@
   background: rgba(63, 185, 80, 0.08);
 }
 
+.type-filter-carousel .h-carousel-track {
+  gap: 0.4rem;
+}
+
+.type-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.type-chip:hover,
+.type-chip.active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.type-chip.all {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.type-chip.flexible {
+  border-color: #238636;
+  color: #3fb950;
+}
+
+.type-chip.onchain {
+  border-color: #1f6feb;
+  color: #58a6ff;
+}
+
+.type-chip.locked {
+  border-color: #d29922;
+  color: var(--warning);
+}
+
+.type-chip.fixed {
+  border-color: #d29922;
+  color: var(--warning);
+}
+
+.type-chip.promo {
+  border-color: #a371f7;
+  color: #d2a8ff;
+}
+
+.type-chip.new-user {
+  border-color: #1f6feb;
+  color: #58a6ff;
+}
+
+.type-chip.new-deposit {
+  border-color: #d29922;
+  color: var(--warning);
+}
+
+.type-chip.new-subscription {
+  border-color: #238636;
+  color: #3fb950;
+}
+
+.type-chip.kyc-required {
+  border-color: #6e7681;
+  color: var(--text-muted);
+}
+
+.type-chip.region-restricted,
+.type-chip.restricted {
+  border-color: #f85149;
+  color: #ff7b72;
+}
+
+.type-chip.vip {
+  border-color: #db6d28;
+  color: #ffa657;
+}
+
+.type-chip.active {
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
 .exchange-chip {
   padding-left: 0.45rem;
 }

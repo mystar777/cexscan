@@ -168,6 +168,11 @@
   color: var(--warning);
 }
 
+.type-badge.fixed {
+  border-color: #d29922;
+  color: var(--warning);
+}
+
 .type-badge.promo {
   border-color: #a371f7;
   color: #d2a8ff;
