@@ -30,12 +30,12 @@
 .col-rank { width: 4%; }
 .col-pool { width: 12%; }
 .col-exchange { width: 13%; }
-.col-type { width: 8%; }
+.col-type { width: 12%; }
 .col-duration { width: 9%; }
 .col-apy { width: 10%; }
 .col-apy-min { width: 8%; }
 .col-min { width: 6%; }
-.col-note { width: 22%; }
+.col-note { width: 18%; }
 .col-source { width: 8%; }
 
 .products-table th {
@@ -171,6 +171,36 @@
 .type-badge.promo {
   border-color: #a371f7;
   color: #d2a8ff;
+}
+
+.type-badge.new-user {
+  border-color: #1f6feb;
+  color: #58a6ff;
+}
+
+.type-badge.new-deposit {
+  border-color: #d29922;
+  color: var(--warning);
+}
+
+.type-badge.new-subscription {
+  border-color: #238636;
+  color: #3fb950;
+}
+
+.type-badge.kyc-required {
+  border-color: #6e7681;
+  color: var(--text-muted);
+}
+
+.type-badge.region-restricted {
+  border-color: #f85149;
+  color: #ff7b72;
+}
+
+.type-badge.vip {
+  border-color: #db6d28;
+  color: #ffa657;
 }
 
 .type-stack {

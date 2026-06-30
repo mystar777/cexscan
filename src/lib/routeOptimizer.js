@@ -1,4 +1,10 @@
+import { productHasAnyTag } from "./productTags.js";
+
 const NEW_USER_RE = /new user|new users|newbie|signup|sign[-\s]?up|welcome|first|one[-\s]?time/i;
+const NEW_DEPOSIT_RE =
+  /new deposit|first deposit|never deposited|deposit\s*&\s*earn|new crypto deposit|new p2p buy|new fiat deposit/i;
+const NEW_SUBSCRIPTION_RE =
+  /new subscription|first subscription|new simple earn|never subscribed|not used simple earn/i;
 const VIP_RE = /\bvip\b/i;
 
 function toNumber(value) {
@@ -36,15 +42,38 @@ function isRestrictedProduct(product) {
 }
 
 function isNewUserOnly(product) {
-  return NEW_USER_RE.test(getNote(product));
+  return (
+    productHasAnyTag(product, [
+      "new-user",
+      "new-user-only",
+      "new-deposit",
+      "new-deposit-only",
+      "new-subscription",
+      "new-subscription-only",
+    ]) ||
+    NEW_USER_RE.test(getNote(product)) ||
+    NEW_DEPOSIT_RE.test(getNote(product)) ||
+    NEW_SUBSCRIPTION_RE.test(getNote(product))
+  );
+}
+
+function isNewDepositOnly(product) {
+  return (
+    productHasAnyTag(product, ["new-deposit", "new-deposit-only"]) ||
+    NEW_DEPOSIT_RE.test(getNote(product))
+  );
 }
 
 function isVipOnly(product) {
-  return VIP_RE.test(getNote(product));
+  return productHasAnyTag(product, ["vip", "vip-only"]) || VIP_RE.test(getNote(product));
+}
+
+function isPromoProduct(product) {
+  return product.productType === "promo" || productHasAnyTag(product, ["promo"]);
 }
 
 function isOneTime(product) {
-  return product.productType === "promo" || NEW_USER_RE.test(getNote(product));
+  return isPromoProduct(product) || isNewUserOnly(product) || isNewDepositOnly(product);
 }
 
 function getProductMin(product) {
@@ -84,7 +113,9 @@ function normalizeProduct(product) {
     minAmountNumber: getProductMin(product),
     maxAmountNumber: getProductMax(product),
     highApyCapacity: getHighApyCapacity(product),
+    promoOnly: isPromoProduct(product),
     newUserOnly: isNewUserOnly(product),
+    newDepositOnly: isNewDepositOnly(product),
     vipOnly: isVipOnly(product),
     restrictedOnly: isRestrictedProduct(product),
     oneTime: isOneTime(product),
@@ -120,8 +151,9 @@ function getStepDays(product, remainingDays) {
 
 function isEligibleProduct(product, options) {
   if (options.asset !== "all" && product.asset !== options.asset) return false;
-  if (!options.includePromos && product.productType === "promo") return false;
-  if (!options.isNewUser && product.newUserOnly) return false;
+  if (!options.includePromos && product.promoOnly) return false;
+  if ((options.excludeNewUser || !options.isNewUser) && product.newUserOnly) return false;
+  if (options.excludeNewDeposit && product.newDepositOnly) return false;
   if (!options.includeVip && product.vipOnly) return false;
   if (!options.includeRestricted && product.restrictedOnly) return false;
   return true;
@@ -325,6 +357,8 @@ export function buildOptimalRoute(products, rawOptions) {
     asset: "all",
     horizonDays: 30,
     includePromos: true,
+    excludeNewUser: false,
+    excludeNewDeposit: false,
     includeVip: false,
     includeRestricted: false,
     isNewUser: true,
@@ -396,6 +430,12 @@ export function buildOptimalRoute(products, rawOptions) {
     },
     eligibleCount: eligibleProducts.length,
     warnings: [
+      !options.includePromos && "Promotional offers are excluded.",
+      options.excludeNewUser && "New-user-only offers are excluded.",
+      !options.excludeNewUser &&
+        !options.isNewUser &&
+        "New-user-only offers are excluded for existing user status.",
+      options.excludeNewDeposit && "New-deposit-only offers are excluded.",
       !options.includeRestricted &&
         "Region- or eligibility-restricted offers are excluded unless enabled.",
       "Fees, withdrawal delays, KYC, country restrictions, and product limit changes are not included.",

@@ -2,13 +2,29 @@ import { useMemo, useState } from "react";
 import { ExchangeLink } from "./ExchangeBrand";
 import { buildOptimalRoute, formatCurrency, formatPercent } from "../lib/routeOptimizer";
 import { formatDateTime } from "../lib/format";
+import { getProductTypeBadges, tagClassName } from "../lib/productTags";
 import "./ExchangeBrand.css";
 import "./RoutePlanner.css";
 
 const HORIZON_OPTIONS = [7, 30, 60, 90];
 
-function TypePill({ type }) {
-  return <span className={`route-type ${type || "flexible"}`}>{type || "earn"}</span>;
+function TypePill({ badge }) {
+  return (
+    <span className={`route-type ${tagClassName(badge.tag)}`} title={badge.label}>
+      {badge.label}
+    </span>
+  );
+}
+
+function TypePills({ product }) {
+  return (
+    <>
+      {getProductTypeBadges(product).map((badge) => (
+        <TypePill key={badge.key} badge={badge} />
+      ))}
+      <RestrictedPill product={product} />
+    </>
+  );
 }
 
 function getEligibilityText(product) {
@@ -51,8 +67,7 @@ function RouteStep({ step, sequenceNumber, allocationLabel }) {
             Day {step.dayStart} - {step.dayEnd}
           </span>
           {allocationLabel && <span className="route-lane">{allocationLabel}</span>}
-          <TypePill type={product.productType} />
-          <RestrictedPill product={product} />
+          <TypePills product={product} />
         </div>
         <div className="route-step-exchange">
           <ExchangeLink exchange={product.exchange} size="sm" />
@@ -108,7 +123,9 @@ export default function RoutePlanner({ products, stableCoins, meta }) {
   const [horizonDays, setHorizonDays] = useState(30);
   const [asset, setAsset] = useState("all");
   const [isNewUser, setIsNewUser] = useState(true);
-  const [includePromos, setIncludePromos] = useState(true);
+  const [excludePromos, setExcludePromos] = useState(false);
+  const [excludeNewUser, setExcludeNewUser] = useState(false);
+  const [excludeNewDeposit, setExcludeNewDeposit] = useState(false);
   const [includeVip, setIncludeVip] = useState(false);
   const [includeRestricted, setIncludeRestricted] = useState(false);
 
@@ -125,7 +142,9 @@ export default function RoutePlanner({ products, stableCoins, meta }) {
         horizonDays,
         asset,
         isNewUser,
-        includePromos,
+        includePromos: !excludePromos,
+        excludeNewUser,
+        excludeNewDeposit,
         includeVip,
         includeRestricted,
       }),
@@ -135,7 +154,9 @@ export default function RoutePlanner({ products, stableCoins, meta }) {
       horizonDays,
       asset,
       isNewUser,
-      includePromos,
+      excludePromos,
+      excludeNewUser,
+      excludeNewDeposit,
       includeVip,
       includeRestricted,
     ],
@@ -214,14 +235,33 @@ export default function RoutePlanner({ products, stableCoins, meta }) {
           </select>
         </label>
 
-        <label className="route-check">
-          <input
-            type="checkbox"
-            checked={includePromos}
-            onChange={(event) => setIncludePromos(event.target.checked)}
-          />
-          <span>Include promos</span>
-        </label>
+        <fieldset className="route-excluding">
+          <legend>Excluding</legend>
+          <label className="route-check compact">
+            <input
+              type="checkbox"
+              checked={excludePromos}
+              onChange={(event) => setExcludePromos(event.target.checked)}
+            />
+            <span>Promo</span>
+          </label>
+          <label className="route-check compact">
+            <input
+              type="checkbox"
+              checked={excludeNewUser}
+              onChange={(event) => setExcludeNewUser(event.target.checked)}
+            />
+            <span>New user</span>
+          </label>
+          <label className="route-check compact">
+            <input
+              type="checkbox"
+              checked={excludeNewDeposit}
+              onChange={(event) => setExcludeNewDeposit(event.target.checked)}
+            />
+            <span>New deposit</span>
+          </label>
+        </fieldset>
 
         <label className="route-check">
           <input

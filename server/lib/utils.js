@@ -49,6 +49,81 @@ export function makeId(exchange, asset, productType, duration, sourceId) {
     .replace(/[^a-z0-9:-]+/g, "-");
 }
 
+const PROMO_TAGS = {
+  promo: "promo",
+  flexible: "flexible",
+  locked: "locked",
+  fixed: "fixed",
+  onchain: "onchain",
+};
+
+const TAG_PATTERNS = [
+  {
+    pattern: /\bnew users?\b|\bnewly registered users?\b|\bfirst[-\s]?time users?\b|\bnewbie\b|\bwelcome\b/i,
+    typeTags: ["new-user"],
+    eligibilityTags: ["new-user-only"],
+  },
+  {
+    pattern:
+      /\bnew deposit\b|\bfirst deposit\b|\bnet deposit\b|\bdeposit\s*&\s*earn\b|\bnever deposited\b|\bnew crypto deposit\b|\bnew p2p buy\b|\bnew fiat deposit\b/i,
+    typeTags: ["new-deposit", "new-user"],
+    eligibilityTags: ["new-deposit-only"],
+  },
+  {
+    pattern:
+      /\bfirst subscription\b|\bnew simple earn\b|\bhad not used simple earn\b|\bnever subscribed\b|\bnot used simple earn\b/i,
+    typeTags: ["new-subscription", "new-user"],
+    eligibilityTags: ["new-subscription-only"],
+  },
+  {
+    pattern: /\bkyc\b|\bidentity verification\b|\bverified users?\b/i,
+    typeTags: ["kyc-required"],
+    eligibilityTags: ["kyc-required"],
+  },
+  {
+    pattern: /\bvip\b/i,
+    typeTags: ["vip"],
+    eligibilityTags: ["vip-only"],
+  },
+  {
+    pattern:
+      /\bregion\b|\bcountries\b|\bcis\b|\bee[a]?\b|\beuropean economic area\b|\bukraine excluded\b|\bnot available to users in\b/i,
+    typeTags: ["region-restricted"],
+    eligibilityTags: ["region-restricted"],
+  },
+];
+
+function normalizeTags(tags) {
+  return Array.from(new Set((tags ?? []).filter(Boolean).map(String)));
+}
+
+function inferProductTags({ productType, note, eligibility }) {
+  const typeTags = [];
+  const eligibilityTags = [];
+  const primary = PROMO_TAGS[String(productType ?? "").toLowerCase()];
+  if (primary) typeTags.push(primary);
+
+  const text = [
+    note,
+    eligibility?.label,
+    eligibility?.summary,
+    ...(Array.isArray(eligibility?.requirements) ? eligibility.requirements : []),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  for (const rule of TAG_PATTERNS) {
+    if (!rule.pattern.test(text)) continue;
+    typeTags.push(...rule.typeTags);
+    eligibilityTags.push(...rule.eligibilityTags);
+  }
+
+  return {
+    typeTags,
+    eligibilityTags,
+  };
+}
+
 export function product({
   exchange,
   asset,
@@ -62,6 +137,7 @@ export function product({
   minAmount,
   maxAmount,
   note,
+  typeTags,
   source,
   sourceId,
   sourceUrl,
@@ -72,14 +148,18 @@ export function product({
   restricted,
 }) {
   const durationLabel = duration || (durationDays ? `${durationDays} days` : "Flexible");
-  const normalizedEligibilityTags = Array.isArray(eligibilityTags)
-    ? eligibilityTags.filter(Boolean)
-    : [];
+  const inferredTags = inferProductTags({ productType, note, eligibility });
+  const normalizedEligibilityTags = normalizeTags([
+    ...inferredTags.eligibilityTags,
+    ...(eligibilityTags ?? []),
+  ]);
+  const normalizedTypeTags = normalizeTags([...inferredTags.typeTags, ...(typeTags ?? [])]);
   return {
     id: makeId(exchange, asset, productType, durationLabel, sourceId),
     exchange,
     asset: String(asset).toUpperCase(),
     productType,
+    typeTags: normalizedTypeTags,
     duration: durationLabel,
     durationDays: durationDays ?? (productType === "flexible" ? 0 : null),
     apy: apy ?? apyMax ?? apyMin ?? 0,

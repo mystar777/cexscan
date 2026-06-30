@@ -43,6 +43,8 @@ function mergeRestrictedMeta(target, source) {
 
   const tags = new Set([...(target.eligibilityTags ?? []), ...(source.eligibilityTags ?? [])]);
   target.eligibilityTags = [...tags];
+  const typeTags = new Set([...(target.typeTags ?? []), ...(source.typeTags ?? [])]);
+  target.typeTags = [...typeTags];
   target.restricted = Boolean(target.restricted || source.restricted || target.eligibilityTags.length);
 }
 

@@ -23,6 +23,7 @@
 .route-kicker,
 .route-updated,
 .route-field > span,
+.route-excluding legend,
 .route-check,
 .route-allocation span,
 .route-stat span,
@@ -47,7 +48,7 @@
 
 .route-form {
   display: grid;
-  grid-template-columns: minmax(10rem, 1.2fr) minmax(12rem, 1fr) minmax(13rem, 1fr) minmax(9rem, 0.8fr) repeat(3, auto);
+  grid-template-columns: minmax(10rem, 1.2fr) minmax(12rem, 1fr) minmax(13rem, 1fr) minmax(9rem, 0.8fr) minmax(17rem, 1.2fr) repeat(2, auto);
   align-items: end;
   gap: 0.75rem;
   padding: 1rem;
@@ -124,6 +125,30 @@
   width: 1rem;
   height: 1rem;
   accent-color: var(--accent);
+}
+
+.route-excluding {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.45rem;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  min-width: 0;
+}
+
+.route-excluding legend {
+  padding: 0 0.25rem;
+}
+
+.route-check.compact {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .route-summary {
@@ -333,7 +358,6 @@
   color: var(--text-muted);
   background: var(--bg);
   font-size: 0.68rem;
-  text-transform: capitalize;
 }
 
 .route-type.flexible {
@@ -349,6 +373,36 @@
 .route-type.promo {
   border-color: #a371f7;
   color: #d2a8ff;
+}
+
+.route-type.new-user {
+  border-color: #1f6feb;
+  color: #58a6ff;
+}
+
+.route-type.new-deposit {
+  border-color: #d29922;
+  color: var(--warning);
+}
+
+.route-type.new-subscription {
+  border-color: #238636;
+  color: #3fb950;
+}
+
+.route-type.kyc-required {
+  border-color: #6e7681;
+  color: var(--text-muted);
+}
+
+.route-type.region-restricted {
+  border-color: #f85149;
+  color: #ff7b72;
+}
+
+.route-type.vip {
+  border-color: #db6d28;
+  color: #ffa657;
 }
 
 .route-type.restricted {

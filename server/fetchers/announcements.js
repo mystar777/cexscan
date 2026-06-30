@@ -7,6 +7,10 @@ const BROWSER_HEADERS = {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 };
 
+const BINANCE_DETAIL_KEYWORDS =
+  /\b(earn|staking|saving|savings|deposit|apr|apy|bonus|reward|promotion|double dip)\b/i;
+const BINANCE_DETAIL_LIMIT = 30;
+
 async function fetchText(url, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeout ?? 15000);
@@ -23,6 +27,80 @@ async function fetchText(url, options = {}) {
   }
 }
 
+function decodeHtmlEntities(text) {
+  return String(text)
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+}
+
+function normalizeArticleText(text) {
+  return decodeHtmlEntities(text)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractRichText(value, key, chunks) {
+  if (value == null) return;
+  if (typeof value === "string") {
+    if (!key || /^(text|content|title|description|body)$/i.test(key)) {
+      const cleaned = normalizeArticleText(value);
+      if (cleaned) chunks.push(cleaned);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) extractRichText(item, key, chunks);
+    return;
+  }
+  if (typeof value === "object") {
+    for (const [childKey, childValue] of Object.entries(value)) {
+      extractRichText(childValue, childKey, chunks);
+    }
+  }
+}
+
+function extractBinanceArticleText(body) {
+  if (!body) return "";
+  let parsed = body;
+  if (typeof body === "string") {
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      return normalizeArticleText(body);
+    }
+  }
+
+  const chunks = [];
+  extractRichText(parsed, null, chunks);
+  return normalizeArticleText(chunks.join(" "));
+}
+
+async function fetchBinanceArticleDescription(code) {
+  const encodedCode = encodeURIComponent(code);
+  const urls = [
+    `https://www.binance.com/bapi/composite/v1/public/cms/article/detail/query?articleCode=${encodedCode}`,
+    `https://www.binance.com/bapi/apex/v1/public/apex/cms/article/detail/query?articleCode=${encodedCode}`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const data = await fetchJson(url, { headers: BROWSER_HEADERS, timeout: 12000 });
+      const body = data?.data?.body || data?.data?.content || data?.data?.description;
+      const text = extractBinanceArticleText(body);
+      if (text) return text;
+    } catch {
+      // Binance detail APIs differ by article; try the next known endpoint.
+    }
+  }
+
+  return "";
+}
+
 async function fetchBinanceAnnouncements() {
   const articles = [];
   const seen = new Set();
@@ -36,6 +114,7 @@ async function fetchBinanceAnnouncements() {
         if (seen.has(a.code)) continue;
         seen.add(a.code);
         articles.push({
+          code: a.code,
           title: a.title,
           url: `https://www.binance.com/en/support/announcement/${a.code}`,
           publishedAt: a.releaseDate ? new Date(a.releaseDate).toISOString() : null,
@@ -43,7 +122,16 @@ async function fetchBinanceAnnouncements() {
       }
     }
   }
-  return articles;
+
+  let detailCount = 0;
+  for (const article of articles) {
+    if (detailCount >= BINANCE_DETAIL_LIMIT) break;
+    if (!BINANCE_DETAIL_KEYWORDS.test(article.title || "")) continue;
+    detailCount += 1;
+    article.description = await fetchBinanceArticleDescription(article.code);
+  }
+
+  return articles.map(({ code, ...article }) => article);
 }
 
 async function fetchBybitAnnouncements() {

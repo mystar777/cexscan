@@ -1,4 +1,5 @@
 const DATE_OPTS = {
+  timeZone: "Asia/Seoul",
   year: "numeric",
   month: "short",
   day: "numeric",
@@ -6,9 +7,13 @@ const DATE_OPTS = {
   minute: "2-digit",
   second: "2-digit",
   hour12: false,
+  hourCycle: "h23",
 };
 
 export function formatDateTime(iso) {
   if (!iso) return "";
-  return new Date(iso).toLocaleString("en-US", DATE_OPTS);
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return `${new Intl.DateTimeFormat("en-US", DATE_OPTS).format(date)} KST`;
 }

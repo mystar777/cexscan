@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { useDragScroll } from "../hooks/useDragScroll";
 import { ExchangeLink } from "./ExchangeBrand";
+import { getProductTypeBadges, tagClassName } from "../lib/productTags";
 import "./ExchangeBrand.css";
 import "./ProductsTable.css";
 
@@ -23,8 +24,23 @@ function formatApy(row, { showMin = true } = {}) {
   return <strong className="apy-single">{max?.toFixed(2) ?? "—"}%</strong>;
 }
 
-function TypeBadge({ type }) {
-  return <span className={`type-badge ${type}`}>{type}</span>;
+function TypeBadge({ badge }) {
+  return (
+    <span className={`type-badge ${tagClassName(badge.tag)}`} title={badge.label}>
+      {badge.label}
+    </span>
+  );
+}
+
+function TypeBadges({ row }) {
+  return (
+    <>
+      {getProductTypeBadges(row).map((badge) => (
+        <TypeBadge key={badge.key} badge={badge} />
+      ))}
+      <RestrictedBadge row={row} />
+    </>
+  );
 }
 
 function getEligibilityText(row) {
@@ -168,8 +184,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
                   </td>
                   <td className="cell-nowrap">
                     <div className="type-stack">
-                      <TypeBadge type={row.productType} />
-                      <RestrictedBadge row={row} />
+                      <TypeBadges row={row} />
                     </div>
                   </td>
                   <td className="duration-cell cell-nowrap">{row.duration}</td>
@@ -212,8 +227,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
               </div>
               <div className="card-row">
                 <span className="card-label">Type</span>
-                <TypeBadge type={row.productType} />
-                <RestrictedBadge row={row} />
+                <TypeBadges row={row} />
                 <span className="card-duration">{row.duration}</span>
               </div>
               <div className="card-row">
