@@ -21,6 +21,7 @@ function emptyAnalytics() {
   return {
     clicks: [],
     access: [],
+    sales: [],
     updatedAt: null,
   };
 }
@@ -39,6 +40,7 @@ function loadAnalytics() {
     analyticsCache = {
       clicks: Array.isArray(parsed.clicks) ? parsed.clicks : [],
       access: Array.isArray(parsed.access) ? parsed.access : [],
+      sales: Array.isArray(parsed.sales) ? parsed.sales : [],
       updatedAt: parsed.updatedAt ?? null,
     };
   } catch (err) {
@@ -266,6 +268,25 @@ function buildRows(events, selector, keyName, includeExchange = false) {
     .sort((a, b) => b.count - a.count || String(a[keyName]).localeCompare(String(b[keyName])));
 }
 
+function buildSalesRows(events, selector, keyName) {
+  const map = new Map();
+  for (const event of events) {
+    const key = selector(event);
+    const current = map.get(key) ?? { count: 0, revenueUsd: 0 };
+    current.count += 1;
+    current.revenueUsd += Number(event.priceUsd) || 0;
+    map.set(key, current);
+  }
+
+  return [...map.entries()]
+    .map(([key, value]) => ({
+      [keyName]: key,
+      count: value.count,
+      revenueUsd: Math.round(value.revenueUsd * 100) / 100,
+    }))
+    .sort((a, b) => b.revenueUsd - a.revenueUsd || b.count - a.count);
+}
+
 function withParts(events) {
   return events.map((event) => {
     const parts = getTimestampParts(event.ts);
@@ -309,11 +330,40 @@ export async function recordExchangeClick(req, exchange) {
   saveAnalytics(analytics);
 }
 
+export async function recordDataSale(req, item, details = {}) {
+  const analytics = loadAnalytics();
+  const country = await getCountry(req);
+  const signature = headerValue(req, "payment-signature");
+  const signatureHash =
+    typeof signature === "string"
+      ? crypto.createHash("sha256").update(signature).digest("hex").slice(0, 32)
+      : null;
+
+  analytics.sales = trimEvents([
+    ...analytics.sales,
+    {
+      ts: new Date().toISOString(),
+      itemId: item.id,
+      title: item.title,
+      priceUsd: item.priceUsd,
+      network: item.network,
+      payTo: item.payTo,
+      path: req.originalUrl || req.url || item.path,
+      country,
+      paymentSignatureHash: signatureHash,
+      ...details,
+    },
+  ]);
+  saveAnalytics(analytics);
+}
+
 export function getAnalyticsSummary(exchanges = []) {
   const analytics = loadAnalytics();
   const clicks = withParts(analytics.clicks);
   const access = withParts(analytics.access);
+  const sales = withParts(analytics.sales ?? []);
   const today = todayKey();
+  const salesRevenue = sales.reduce((sum, event) => sum + (Number(event.priceUsd) || 0), 0);
 
   const exchangeRows = exchanges.map((exchange) => {
     const events = clicks.filter((event) => event.exchange === exchange.name);
@@ -356,6 +406,17 @@ export function getAnalyticsSummary(exchanges = []) {
         "country",
       ),
       recent: access.slice(-20).reverse(),
+    },
+    sales: {
+      total: sales.length,
+      revenueUsd: Math.round(salesRevenue * 100) / 100,
+      today: sales.filter((event) => event.date === today).length,
+      last24h: sales.filter(withinLast24Hours).length,
+      byItem: buildSalesRows(sales, (event) => event.title || event.itemId || "Unknown", "item"),
+      byDate: buildSalesRows(sales, (event) => event.date, "date"),
+      byHour: buildSalesRows(sales, (event) => event.hour, "hour"),
+      byCountry: buildSalesRows(sales, (event) => event.country, "country"),
+      recent: sales.slice(-20).reverse(),
     },
   };
 }

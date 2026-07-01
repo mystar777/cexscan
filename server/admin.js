@@ -232,6 +232,11 @@ function formatDateTime(iso) {
   });
 }
 
+function formatUsd(value) {
+  const amount = Number(value) || 0;
+  return `$${amount.toFixed(2)}`;
+}
+
 function panel(title, subtitle, rows, columns, emptyText) {
   return `<section class="panel">
     <div class="panel-head"><h2>${escapeHtml(title)}</h2><span>${escapeHtml(subtitle)}</span></div>
@@ -350,6 +355,22 @@ function renderAdmin(req) {
     { key: "path", label: "Path" },
     { key: "country", label: "Country" },
   ];
+  const salesColumns = [
+    { key: "item", label: "Item" },
+    { key: "date", label: "Date" },
+    { key: "hour", label: "Hour" },
+    { key: "country", label: "Country" },
+    { key: "count", label: "Sales", className: "num" },
+    { key: "revenueUsd", label: "Revenue", className: "num", render: (row) => formatUsd(row.revenueUsd) },
+  ];
+  const recentSalesColumns = [
+    { key: "ts", label: "Time", render: (row) => formatDateTime(row.ts) },
+    { key: "title", label: "Item" },
+    { key: "priceUsd", label: "Price", className: "num", render: (row) => formatUsd(row.priceUsd) },
+    { key: "network", label: "Network" },
+    { key: "country", label: "Country" },
+    { key: "paymentSignatureHash", label: "Payment hash" },
+  ];
 
   const clickDateRows = summary.clicks.byDate.map((row) => ({
     exchange: row.exchange,
@@ -390,6 +411,38 @@ function renderAdmin(req) {
     country: row.country,
     count: row.count,
   }));
+  const salesItemRows = summary.sales.byItem.map((row) => ({
+    item: row.item,
+    date: "-",
+    hour: "-",
+    country: "-",
+    count: row.count,
+    revenueUsd: row.revenueUsd,
+  }));
+  const salesDateRows = summary.sales.byDate.map((row) => ({
+    item: "-",
+    date: row.date,
+    hour: "-",
+    country: "-",
+    count: row.count,
+    revenueUsd: row.revenueUsd,
+  }));
+  const salesHourRows = summary.sales.byHour.map((row) => ({
+    item: "-",
+    date: "-",
+    hour: row.hour,
+    country: "-",
+    count: row.count,
+    revenueUsd: row.revenueUsd,
+  }));
+  const salesCountryRows = summary.sales.byCountry.map((row) => ({
+    item: "-",
+    date: "-",
+    hour: "-",
+    country: row.country,
+    count: row.count,
+    revenueUsd: row.revenueUsd,
+  }));
 
   return pageShell({
     title: "CEXScan Admin",
@@ -408,11 +461,15 @@ function renderAdmin(req) {
       <section class="grid">
         <div class="metric"><span>Exchange clicks</span><strong>${summary.clicks.total}</strong></div>
         <div class="metric"><span>Page views</span><strong>${summary.access.total}</strong></div>
-        <div class="metric"><span>Views today</span><strong>${summary.access.today}</strong></div>
-        <div class="metric"><span>Views last 24h</span><strong>${summary.access.last24h}</strong></div>
+        <div class="metric"><span>Data sales</span><strong>${summary.sales.total}</strong></div>
+        <div class="metric"><span>Sales revenue</span><strong>${formatUsd(summary.sales.revenueUsd)}</strong></div>
       </section>
 
       ${renderCountryVisitors(summary, countryRange)}
+      ${panel("X402 data sales by item", "Paid API/item", salesItemRows, salesColumns)}
+      ${panel("X402 data sales by date", "Paid API/date", salesDateRows, salesColumns)}
+      ${panel("X402 data sales by hour", "Paid API/hour", salesHourRows, salesColumns)}
+      ${panel("X402 data sales by country", "Paid API/country", salesCountryRows, salesColumns)}
       ${panel("Exchange click stats", "By exchange", summary.clicks.exchangeRows, clickColumns)}
       ${panel("Click totals by date", "Exchange/date", clickDateRows, exchangeBreakdownColumns)}
       ${panel("Click totals by hour", "Exchange/hour", clickHourRows, exchangeBreakdownColumns)}
@@ -420,6 +477,7 @@ function renderAdmin(req) {
       ${panel("Access totals by date", "Site/date", accessDateRows, accessColumns)}
       ${panel("Access totals by hour", "Site/hour", accessHourRows, accessColumns)}
       ${panel("Access totals by country", "Site/country", accessCountryRows, accessColumns)}
+      ${panel("Recent X402 data sales", "Latest 20", summary.sales.recent, recentSalesColumns)}
       ${panel("Recent exchange clicks", "Latest 20", summary.clicks.recent, recentClickColumns)}
       ${panel("Recent page views", "Latest 20", summary.access.recent, recentAccessColumns)}
     </main>`,

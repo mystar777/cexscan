@@ -99,10 +99,15 @@
 
 .header-nav {
   justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-width: 0;
 }
 
 .route-menu-button {
-  min-width: 15.5rem;
+  min-width: 9.5rem;
   min-height: 3rem;
   padding: 0.5rem 1.25rem;
   border: 1px solid rgba(63, 185, 80, 0.55);
@@ -206,10 +211,10 @@
   }
 
   .route-menu-button {
-    min-width: 11.75rem;
+    min-width: 7.5rem;
     min-height: 2.75rem;
     padding: 0.45rem 0.85rem;
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .main {
@@ -228,8 +233,8 @@
   }
 
   .route-menu-button {
-    min-width: 10.2rem;
-    font-size: 0.92rem;
+    min-width: 6.85rem;
+    font-size: 0.82rem;
   }
 }
 

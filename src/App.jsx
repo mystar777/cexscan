@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Dashboard from "./components/Dashboard";
+import DataStore from "./components/DataStore";
 import RoutePlanner from "./components/RoutePlanner";
 import { formatDateTime } from "./lib/format.js";
 import "./App.css";
@@ -130,6 +131,15 @@ export default function App() {
             >
               {activeView === "route" ? "Back to List" : "AI Route"}
             </button>
+            <button
+              type="button"
+              className={`route-menu-button ${activeView === "data" ? "active" : ""}`}
+              onClick={() =>
+                setActiveView((view) => (view === "data" ? "dashboard" : "data"))
+              }
+            >
+              {activeView === "data" ? "Back to List" : "Data API"}
+            </button>
           </nav>
           <div className="header-meta">
             {meta?.fetchedAt && (
@@ -152,6 +162,8 @@ export default function App() {
             stableCoins={stableCoins}
             meta={meta}
           />
+        ) : activeView === "data" ? (
+          <DataStore />
         ) : (
           <Dashboard
             products={data?.products ?? []}

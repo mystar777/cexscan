@@ -1,0 +1,208 @@
+.data-store {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.data-store-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, auto);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.data-store-head h2 {
+  margin: 0.15rem 0 0;
+  font-size: 1.55rem;
+  line-height: 1.15;
+}
+
+.data-store-head p {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.data-kicker,
+.data-payment span,
+.data-meta-list dt {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.data-payment {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem 0.65rem;
+  align-items: center;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.data-payment strong,
+.data-payment code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.data-product {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.data-product-main {
+  min-width: 0;
+}
+
+.data-product h3 {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+}
+
+.data-product p {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.data-price {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(63, 185, 80, 0.4);
+  border-radius: 999px;
+  color: var(--accent);
+  background: rgba(63, 185, 80, 0.08);
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+
+.data-meta-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.data-meta-list div {
+  min-width: 0;
+  padding: 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.data-meta-list dd {
+  margin: 0.2rem 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.data-fields span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  background: var(--bg);
+  font-size: 0.7rem;
+}
+
+.data-endpoint {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding-top: 0.1rem;
+}
+
+.data-curl {
+  min-width: 0;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: auto;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+.data-endpoint a {
+  color: var(--link);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.data-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.data-notes span {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+}
+
+@media (max-width: 900px) {
+  .data-store-head,
+  .data-products {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .data-store-head,
+  .data-product {
+    padding: 0.8rem;
+  }
+
+  .data-store-head h2 {
+    font-size: 1.25rem;
+  }
+
+  .data-payment,
+  .data-meta-list,
+  .data-endpoint {
+    grid-template-columns: 1fr;
+  }
+}

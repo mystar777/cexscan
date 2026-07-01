@@ -19,6 +19,7 @@ import {
   handleEvents,
   startCacheWatcher,
 } from "./live-events.js";
+import { installX402Routes } from "./x402-commerce.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3344;
@@ -71,6 +72,7 @@ app.get("/api/visitor-stats", (_req, res) => {
 });
 
 app.get("/api/events", handleEvents);
+installX402Routes(app);
 
 app.get("/api/out/:exchangeId", (req, res) => {
   const exchange = exchangeById.get(req.params.exchangeId);
