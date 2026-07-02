@@ -75,7 +75,7 @@ app.get("/api/visitor-stats", (_req, res) => {
 app.get("/api/events", handleEvents);
 installX402Routes(app);
 app.get("/history", handleHistoryIndex);
-app.get("/history/:exchangeId", handleHistoryArticle);
+app.get("/history/:postSlug", handleHistoryArticle);
 app.get("/sitemap.xml", handleSitemap);
 
 app.get("/api/out/:exchangeId", (req, res) => {
