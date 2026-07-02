@@ -15,7 +15,6 @@ export const DATA_DIR = process.env.CEXSCAN_DATA_DIR || productionSharedDataDir;
 export const CACHE_PATH = path.join(DATA_DIR, "cache.json");
 const HISTORY_PATH = path.join(DATA_DIR, "history.json");
 const POOL_HISTORY_POSTS_PATH = path.join(DATA_DIR, "pool-history-posts.json");
-const MAX_POOL_HISTORY_POSTS = 90;
 
 function ensureDir() {
   const dir = path.dirname(CACHE_PATH);
@@ -136,7 +135,7 @@ function writePoolHistoryPost(snapshot) {
   posts.unshift(post);
   fs.writeFileSync(
     POOL_HISTORY_POSTS_PATH,
-    JSON.stringify(posts.slice(0, MAX_POOL_HISTORY_POSTS), null, 2),
+    JSON.stringify(posts, null, 2),
   );
 }
 
