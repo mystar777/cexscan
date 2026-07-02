@@ -62,11 +62,10 @@ function RestrictedBadge({ row }) {
   );
 }
 
-function PoolAsset({ asset, tiered }) {
+function PoolAsset({ asset }) {
   return (
     <div className="pool-asset">
       <span className="asset-badge">{asset}</span>
-      {tiered && <span className="tag">Tiered</span>}
     </div>
   );
 }
@@ -119,6 +118,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
     { key: "apy", label: "Max APY", sortable: true },
     { key: "apyMin", label: "Min APY", sortable: true },
     { key: "minAmount", label: "Min", sortable: false },
+    { key: "maxAmount", label: "Max", sortable: false },
     { key: "note", label: "Note", sortable: false },
     { key: "source", label: "Source", sortable: true },
   ];
@@ -139,6 +139,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
             <col className="col-apy" />
             <col className="col-apy-min" />
             <col className="col-min" />
+            <col className="col-max" />
             <col className="col-note" />
             <col className="col-source" />
           </colgroup>
@@ -174,10 +175,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
                 <tr key={row.id}>
                   <td className="rank cell-nowrap">{i + 1}</td>
                   <td className="pool-cell">
-                    <PoolAsset
-                      asset={row.asset}
-                      tiered={row.tierDetails?.length > 1}
-                    />
+                    <PoolAsset asset={row.asset} />
                   </td>
                   <td className="exchange-cell cell-nowrap">
                     <ExchangeLink exchange={row.exchange} size="sm" />
@@ -193,6 +191,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
                     {row.apyMin != null ? `${row.apyMin.toFixed(2)}%` : "—"}
                   </td>
                   <td className="muted cell-nowrap">{row.minAmount ?? "—"}</td>
+                  <td className="muted cell-nowrap">{row.maxAmount ?? "—"}</td>
                   <td className="note-cell muted">
                     <NoteCell row={row} />
                   </td>
@@ -215,10 +214,7 @@ export default function ProductsTable({ rows, sort, onSort }) {
               <div className="card-top">
                 <div className="card-pool">
                   <span className="card-rank">{i + 1}</span>
-                  <PoolAsset
-                    asset={row.asset}
-                    tiered={row.tierDetails?.length > 1}
-                  />
+                  <PoolAsset asset={row.asset} />
                 </div>
                 <div className="card-exchange">
                   <ExchangeLink exchange={row.exchange} size="sm" />
@@ -237,6 +233,12 @@ export default function ProductsTable({ rows, sort, onSort }) {
                 </span>
                 <span className="card-label spaced">Source</span>
                 <SourceTags row={row} />
+              </div>
+              <div className="card-row">
+                <span className="card-label">Min</span>
+                <span className="muted">{row.minAmount ?? "—"}</span>
+                <span className="card-label spaced">Max</span>
+                <span className="muted">{row.maxAmount ?? "—"}</span>
               </div>
               {(row.note || row.announcementUrl || row.restricted) && (
                 <div className="card-note muted">

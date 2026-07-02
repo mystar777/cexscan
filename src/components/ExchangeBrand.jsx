@@ -42,12 +42,11 @@ export function ExchangeLink({ exchange, size = "md" }) {
   return <span className={className}>{inner}</span>;
 }
 
-export function PoolHeader({ asset, exchange, tiered }) {
+export function PoolHeader({ asset, exchange }) {
   return (
     <div className="pool-header">
       <div className="pool-asset">
         <span className="asset-badge">{asset}</span>
-        {tiered && <span className="tag">Tiered</span>}
       </div>
       <ExchangeLink exchange={exchange} size="lg" />
     </div>

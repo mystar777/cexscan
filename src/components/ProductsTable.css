@@ -28,13 +28,14 @@
 
 /* Column widths */
 .col-rank { width: 4%; }
-.col-pool { width: 12%; }
-.col-exchange { width: 13%; }
+.col-pool { width: 9%; }
+.col-exchange { width: 12%; }
 .col-type { width: 12%; }
-.col-duration { width: 9%; }
+.col-duration { width: 8%; }
 .col-apy { width: 10%; }
-.col-apy-min { width: 8%; }
+.col-apy-min { width: 7%; }
 .col-min { width: 6%; }
+.col-max { width: 6%; }
 .col-note { width: 18%; }
 .col-source { width: 8%; }
 
@@ -108,15 +109,6 @@
 
 .asset-badge {
   font-weight: 600;
-}
-
-.tag {
-  margin-left: 0.35rem;
-  font-size: 0.65rem;
-  padding: 0.1rem 0.35rem;
-  border-radius: 4px;
-  background: rgba(210, 153, 34, 0.15);
-  color: var(--warning);
 }
 
 .exchange-inner {
@@ -363,10 +355,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: bottom;
-}
-
-.card-pool .tag {
-  margin-left: 0.25rem;
 }
 
 .card-exchange {
