@@ -1,7 +1,7 @@
 {
   "name": "CEX Stable Staking",
   "short_name": "CEX Staking",
-  "description": "Stablecoin staking APY dashboard across centralized exchanges.",
+  "description": "Crypto stablecoin staking APY dashboard across Binance, Bybit, OKX, Gate.io, MEXC, KuCoin, LBank, BingX, and other centralized exchanges.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0d1117",

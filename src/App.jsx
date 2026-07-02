@@ -117,7 +117,7 @@ export default function App() {
             <div>
               <h1>{logoText}</h1>
               <p className="subtitle">
-                Compare stablecoin staking APY across major centralized exchanges
+                Compare crypto stablecoin staking APY across major centralized exchanges
               </p>
             </div>
           </div>
@@ -177,8 +177,9 @@ export default function App() {
       <footer className="footer">
         <p>
           Synced every 1 hour by Codex automation via public APIs, exchange Earn pages,
-          and notices. Sources include Bybit, OKX, Gate.io, Bitget, MEXC, HTX,
-          Kraken, Crypto.com, LBank, and BingX where publicly available.
+          and notices. Sources include Binance, Coinbase, Bybit, OKX, Gate.io, KuCoin,
+          Bitget, MEXC, HTX, Kraken, Crypto.com, LBank, and BingX where publicly
+          available. <a href="/history">Read the crypto staking history board</a>.
         </p>
       </footer>
     </div>
