@@ -131,6 +131,9 @@ function pageShell({ title, body }) {
       --danger: #ff7b72;
       --purple: #a371f7;
       --warning: #d29922;
+      --scrollbar: #f97316;
+      --scrollbar-track: rgba(13,17,23,.5);
+      --admin-scroll-panel-height: 390px;
       font-family: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
       background: var(--bg);
@@ -199,7 +202,7 @@ function pageShell({ title, body }) {
     .recent-row:last-child { border-bottom: 0; padding-bottom: 0; }
     .recent-meta { color: var(--muted); font-size: .75rem; }
     .section-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-    .section-grid .country-card, .section-grid .panel { margin-top: 0; }
+    .section-grid .country-card, .section-grid .panel { margin-top: 0; display: flex; flex-direction: column; height: var(--admin-scroll-panel-height); max-height: var(--admin-scroll-panel-height); min-height: 0; }
     .country-card { margin-top: 16px; background: linear-gradient(180deg, #151a23 0%, #11161d 100%); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
     .country-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: rgba(13,17,23,.46); }
     .country-head h2 { margin: 0; }
@@ -207,6 +210,12 @@ function pageShell({ title, body }) {
     .country-tab { min-width: 72px; padding: 6px 10px; border-radius: 999px; color: var(--muted); text-align: center; text-decoration: none; font-size: .82rem; font-weight: 700; }
     .country-tab.active { color: var(--text); background: rgba(255,255,255,.08); }
     .country-list { list-style: none; margin: 0; padding: 0; }
+    .section-grid .country-list, .section-grid .table-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+    .country-list, .table-scroll { scrollbar-width: thin; scrollbar-color: var(--scrollbar) var(--scrollbar-track); }
+    .country-list::-webkit-scrollbar, .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .country-list::-webkit-scrollbar-track, .table-scroll::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 999px; }
+    .country-list::-webkit-scrollbar-thumb, .table-scroll::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 999px; }
+    .country-list::-webkit-scrollbar-button, .table-scroll::-webkit-scrollbar-button { width: 0; height: 0; display: none; }
     .country-row { display: grid; grid-template-columns: minmax(10rem, 1.1fr) minmax(8rem, 1fr) 4rem 3rem; align-items: center; gap: 12px; padding: 11px 16px; border-bottom: 1px solid rgba(48,54,61,.72); }
     .country-row:last-child { border-bottom: 0; }
     .country-name { display: inline-flex; align-items: center; min-width: 0; gap: 10px; }
@@ -217,10 +226,11 @@ function pageShell({ title, body }) {
     .country-bar span { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, #58a6ff, #a371f7); }
     .country-count { text-align: right; font-variant-numeric: tabular-nums; }
     .country-percent { text-align: right; color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
-    .table-scroll { overflow-x: auto; }
+    .table-scroll { overflow: auto; }
+    details.panel[open] .table-scroll { max-height: var(--admin-scroll-panel-height); }
     table { width: 100%; border-collapse: collapse; font-size: .86rem; }
     th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-    th { color: var(--muted); font-weight: 600; background: #0b1016; }
+    th { color: var(--muted); font-weight: 600; background: #0b1016; position: sticky; top: 0; z-index: 1; }
     tr:last-child td { border-bottom: 0; }
     td.num { color: var(--accent); font-weight: 700; }
     .muted { color: var(--muted); }
@@ -230,6 +240,7 @@ function pageShell({ title, body }) {
       .api-hero, .api-card-grid, .section-grid { grid-template-columns: 1fr; }
       .api-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .topbar { align-items: flex-start; flex-direction: column; }
+      :root { --admin-scroll-panel-height: 360px; }
       .country-row { grid-template-columns: minmax(8rem, 1fr) minmax(5rem, .8fr) 3.5rem 2.8rem; padding-inline: 12px; }
     }
     @media (max-width: 520px) {
