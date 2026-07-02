@@ -7,6 +7,7 @@ const ADMIN_PASSWORD = "dudguslcjswo12#$";
 const SESSION_SECRET = "cexscan-admin-session-v1-dudguslcjswo12#$";
 const SESSION_COOKIE = "cexscan_admin";
 const SESSION_MAX_AGE_SECONDS = 12 * 60 * 60;
+const CHART_COLORS = ["#3fb950", "#58a6ff", "#a371f7", "#d29922", "#ff7b72", "#ffa657"];
 const COUNTRY_NAMES = {
   AU: "Australia",
   BD: "Bangladesh",
@@ -127,6 +128,9 @@ function pageShell({ title, body }) {
       --muted: #8b949e;
       --accent: #3fb950;
       --link: #58a6ff;
+      --danger: #ff7b72;
+      --purple: #a371f7;
+      --warning: #d29922;
       font-family: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
       background: var(--bg);
@@ -136,7 +140,7 @@ function pageShell({ title, body }) {
     a { color: var(--link); }
     .wrap { width: min(1400px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 40px; }
     .login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
-    .login-card, .panel, .metric { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; }
+    .login-card, .panel, .metric, .api-hero, .api-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; }
     .login-card { width: min(420px, 100%); padding: 24px; }
     h1, h2, h3, p { margin-top: 0; }
     h1 { font-size: 1.65rem; margin-bottom: 6px; }
@@ -156,6 +160,46 @@ function pageShell({ title, body }) {
     .panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--panel-2); }
     .panel-head h2 { margin: 0; }
     .panel-head span { color: var(--muted); font-size: .8rem; }
+    details.panel > summary.panel-head { cursor: pointer; list-style: none; }
+    details.panel > summary.panel-head::-webkit-details-marker { display: none; }
+    details.panel > summary.panel-head::after { content: "Open"; color: var(--accent); font-size: .78rem; font-weight: 800; }
+    details.panel[open] > summary.panel-head::after { content: "Close"; }
+    .api-dashboard { display: grid; gap: 14px; margin-bottom: 16px; }
+    .api-hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.85fr); gap: 14px; padding: 16px; background: linear-gradient(135deg, rgba(63,185,80,.14), rgba(88,166,255,.08) 48%, rgba(163,113,247,.08)); }
+    .api-title { min-width: 0; }
+    .api-kicker { color: var(--accent); font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+    .api-title h2 { margin: 8px 0 0; color: var(--text); font-size: 1.65rem; letter-spacing: 0; text-transform: none; }
+    .api-title p { margin: 8px 0 0; color: var(--muted); line-height: 1.45; }
+    .api-payto { margin-top: 14px; display: grid; gap: 4px; color: var(--muted); font-size: .76rem; }
+    .api-payto code { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .api-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .api-metric { min-width: 0; padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: rgba(13,17,23,.62); }
+    .api-metric span { display: block; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; }
+    .api-metric strong { display: block; margin-top: 6px; font-size: 1.35rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .api-metric.accent strong { color: var(--accent); }
+    .api-card-grid { display: grid; grid-template-columns: minmax(19rem, .9fr) minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
+    .api-card { min-width: 0; padding: 14px; }
+    .api-card h3 { margin: 0 0 12px; color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+    .donut-wrap { display: grid; grid-template-columns: 8.75rem minmax(0, 1fr); align-items: center; gap: 14px; }
+    .donut { width: 8.75rem; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--border) 0 100%); position: relative; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+    .donut::after { content: ""; position: absolute; width: 58%; aspect-ratio: 1; border-radius: 50%; background: var(--panel); border: 1px solid rgba(255,255,255,.08); }
+    .donut-center { position: relative; z-index: 1; display: grid; gap: 2px; text-align: center; }
+    .donut-center strong { font-size: 1rem; }
+    .donut-center span { color: var(--muted); font-size: .65rem; text-transform: uppercase; letter-spacing: .04em; }
+    .legend, .bar-list, .recent-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+    .legend-row, .bar-row, .recent-row { min-width: 0; display: grid; align-items: center; gap: 8px; }
+    .legend-row { grid-template-columns: .7rem minmax(0, 1fr) auto; }
+    .legend-dot { width: .65rem; height: .65rem; border-radius: 50%; background: var(--accent); }
+    .legend-label, .bar-label, .recent-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .legend-value, .bar-value, .recent-price { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--text); }
+    .bar-row { grid-template-columns: minmax(0, 1fr) 5rem; }
+    .bar-track { grid-column: 1 / -1; height: 8px; border-radius: 999px; background: rgba(88,166,255,.08); overflow: hidden; }
+    .bar-fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--link)); }
+    .recent-row { grid-template-columns: minmax(0, 1fr) auto; padding-bottom: 9px; border-bottom: 1px solid rgba(48,54,61,.72); }
+    .recent-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .recent-meta { color: var(--muted); font-size: .75rem; }
+    .section-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .section-grid .country-card, .section-grid .panel { margin-top: 0; }
     .country-card { margin-top: 16px; background: linear-gradient(180deg, #151a23 0%, #11161d 100%); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
     .country-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: rgba(13,17,23,.46); }
     .country-head h2 { margin: 0; }
@@ -183,12 +227,15 @@ function pageShell({ title, body }) {
     .empty { color: var(--muted); padding: 18px; }
     @media (max-width: 840px) {
       .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .api-hero, .api-card-grid, .section-grid { grid-template-columns: 1fr; }
+      .api-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .topbar { align-items: flex-start; flex-direction: column; }
       .country-row { grid-template-columns: minmax(8rem, 1fr) minmax(5rem, .8fr) 3.5rem 2.8rem; padding-inline: 12px; }
     }
     @media (max-width: 520px) {
       .wrap { width: min(100% - 20px, 1400px); padding-top: 18px; }
-      .grid { grid-template-columns: 1fr; }
+      .grid, .api-metrics, .donut-wrap { grid-template-columns: 1fr; }
+      .donut { justify-self: center; }
       .country-head { grid-template-columns: 1fr; }
       .country-tabs { width: 100%; }
       .country-tab { flex: 1; }
@@ -237,10 +284,145 @@ function formatUsd(value) {
   return `$${amount.toFixed(2)}`;
 }
 
+function formatNumber(value) {
+  return new Intl.NumberFormat("en-US").format(Number(value) || 0);
+}
+
 function panel(title, subtitle, rows, columns, emptyText) {
   return `<section class="panel">
     <div class="panel-head"><h2>${escapeHtml(title)}</h2><span>${escapeHtml(subtitle)}</span></div>
     ${renderRows(rows, columns, emptyText)}
+  </section>`;
+}
+
+function detailPanel(title, subtitle, rows, columns, emptyText) {
+  return `<details class="panel">
+    <summary class="panel-head"><h2>${escapeHtml(title)}</h2><span>${escapeHtml(subtitle)}</span></summary>
+    ${renderRows(rows, columns, emptyText)}
+  </details>`;
+}
+
+function percent(part, total) {
+  if (!total) return 0;
+  return Math.max(0, Math.min(100, Math.round((part / total) * 100)));
+}
+
+function cssGradientForRows(rows, total) {
+  if (!rows.length || !total) return "var(--border) 0 100%";
+
+  let cursor = 0;
+  return rows
+    .slice(0, CHART_COLORS.length)
+    .map((row, index) => {
+      const size = (Number(row.count) || 0) / total * 100;
+      const start = cursor;
+      cursor += size;
+      return `${CHART_COLORS[index]} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
+    })
+    .join(", ");
+}
+
+function renderLegend(rows, total, keyName) {
+  if (!rows.length) return `<div class="empty">No API sales yet.</div>`;
+
+  return `<ul class="legend">${rows
+    .slice(0, CHART_COLORS.length)
+    .map((row, index) => {
+      const label = row[keyName] ?? "Unknown";
+      return `<li class="legend-row">
+        <span class="legend-dot" style="background:${CHART_COLORS[index]}"></span>
+        <span class="legend-label">${escapeHtml(label)}</span>
+        <span class="legend-value">${formatNumber(row.count)} · ${percent(row.count, total)}%</span>
+      </li>`;
+    })
+    .join("")}</ul>`;
+}
+
+function renderDonutCard(title, rows, total, centerValue, centerLabel, keyName) {
+  return `<section class="api-card">
+    <h3>${escapeHtml(title)}</h3>
+    <div class="donut-wrap">
+      <div class="donut" style="background: conic-gradient(${cssGradientForRows(rows, total)})">
+        <div class="donut-center"><strong>${escapeHtml(centerValue)}</strong><span>${escapeHtml(centerLabel)}</span></div>
+      </div>
+      ${renderLegend(rows, total, keyName)}
+    </div>
+  </section>`;
+}
+
+function renderBars(title, rows, keyName, valueLabel = "count") {
+  const max = Math.max(...rows.map((row) => Number(row.count) || 0), 0);
+  const content = rows.length
+    ? `<ul class="bar-list">${rows
+        .slice(0, 6)
+        .map((row) => {
+          const label = keyName === "country" ? countryDisplayName(row[keyName]) : row[keyName] ?? "Unknown";
+          return `<li class="bar-row">
+            <span class="bar-label">${escapeHtml(label)}</span>
+            <span class="bar-value">${valueLabel === "revenue" ? formatUsd(row.revenueUsd) : formatNumber(row.count)}</span>
+            <span class="bar-track"><span class="bar-fill" style="width:${percent(row.count, max)}%"></span></span>
+          </li>`;
+        })
+        .join("")}</ul>`
+    : `<div class="empty">No API sales yet.</div>`;
+
+  return `<section class="api-card"><h3>${escapeHtml(title)}</h3>${content}</section>`;
+}
+
+function renderRecentSales(rows) {
+  const content = rows.length
+    ? `<ul class="recent-list">${rows
+        .slice(0, 5)
+        .map(
+          (row) => `<li class="recent-row">
+            <div>
+              <div class="recent-title">${escapeHtml(row.title || row.itemId || "Unknown item")}</div>
+              <div class="recent-meta">${escapeHtml(formatDateTime(row.ts))} · ${escapeHtml(row.country || "Unknown")}</div>
+            </div>
+            <strong class="recent-price">${formatUsd(row.priceUsd)}</strong>
+          </li>`,
+        )
+        .join("")}</ul>`
+    : `<div class="empty">No paid API calls yet.</div>`;
+
+  return `<section class="api-card"><h3>Recent paid API calls</h3>${content}</section>`;
+}
+
+function renderApiDashboard(summary) {
+  const sales = summary.sales;
+  const itemRows = sales.byItem ?? [];
+  const countryRows = sales.byCountry ?? [];
+  const totalSales = sales.total || 0;
+  const topItem = itemRows[0]?.item ?? "No sales yet";
+  const topCountry = countryRows[0]?.country ? countryDisplayName(countryRows[0].country) : "No sales yet";
+
+  return `<section class="api-dashboard" aria-label="X402 API sales overview">
+    <div class="api-hero">
+      <div class="api-title">
+        <span class="api-kicker">X402 API revenue</span>
+        <h2>Paid data API dashboard</h2>
+        <p>Sales, revenue, and endpoint demand are now the first thing visible after login.</p>
+        <div class="api-payto">
+          <span>Receiving wallet</span>
+          <code>0xd25f1f178cc0f63a4feb86cfc450ab27e23337a7</code>
+        </div>
+      </div>
+      <div class="api-metrics">
+        <div class="api-metric accent"><span>Revenue</span><strong>${formatUsd(sales.revenueUsd)}</strong></div>
+        <div class="api-metric"><span>Total sales</span><strong>${formatNumber(totalSales)}</strong></div>
+        <div class="api-metric"><span>Today</span><strong>${formatNumber(sales.today)}</strong></div>
+        <div class="api-metric"><span>Last 24h</span><strong>${formatNumber(sales.last24h)}</strong></div>
+        <div class="api-metric"><span>Top product</span><strong title="${escapeHtml(topItem)}">${escapeHtml(topItem)}</strong></div>
+        <div class="api-metric"><span>Top country</span><strong>${escapeHtml(topCountry)}</strong></div>
+        <div class="api-metric"><span>Page views</span><strong>${formatNumber(summary.access.total)}</strong></div>
+        <div class="api-metric"><span>Exchange clicks</span><strong>${formatNumber(summary.clicks.total)}</strong></div>
+      </div>
+    </div>
+    <div class="api-card-grid">
+      ${renderDonutCard("Sales by data product", itemRows, totalSales, formatNumber(totalSales), "sales", "item")}
+      ${renderBars("Sales by country", countryRows, "country")}
+      ${renderRecentSales(sales.recent)}
+    </div>
   </section>`;
 }
 
@@ -458,28 +640,33 @@ function renderAdmin(req) {
         </form>
       </header>
 
+      ${renderApiDashboard(summary)}
+
       <section class="grid">
-        <div class="metric"><span>Exchange clicks</span><strong>${summary.clicks.total}</strong></div>
-        <div class="metric"><span>Page views</span><strong>${summary.access.total}</strong></div>
-        <div class="metric"><span>Data sales</span><strong>${summary.sales.total}</strong></div>
-        <div class="metric"><span>Sales revenue</span><strong>${formatUsd(summary.sales.revenueUsd)}</strong></div>
+        <div class="metric"><span>Views today</span><strong>${formatNumber(summary.access.today)}</strong></div>
+        <div class="metric"><span>Views last 24h</span><strong>${formatNumber(summary.access.last24h)}</strong></div>
+        <div class="metric"><span>Clicks today</span><strong>${formatNumber(summary.clicks.exchangeRows.reduce((sum, row) => sum + row.today, 0))}</strong></div>
+        <div class="metric"><span>Clicks last 24h</span><strong>${formatNumber(summary.clicks.exchangeRows.reduce((sum, row) => sum + row.last24h, 0))}</strong></div>
       </section>
 
-      ${renderCountryVisitors(summary, countryRange)}
-      ${panel("X402 data sales by item", "Paid API/item", salesItemRows, salesColumns)}
-      ${panel("X402 data sales by date", "Paid API/date", salesDateRows, salesColumns)}
-      ${panel("X402 data sales by hour", "Paid API/hour", salesHourRows, salesColumns)}
-      ${panel("X402 data sales by country", "Paid API/country", salesCountryRows, salesColumns)}
-      ${panel("Exchange click stats", "By exchange", summary.clicks.exchangeRows, clickColumns)}
-      ${panel("Click totals by date", "Exchange/date", clickDateRows, exchangeBreakdownColumns)}
-      ${panel("Click totals by hour", "Exchange/hour", clickHourRows, exchangeBreakdownColumns)}
-      ${panel("Click totals by country", "Exchange/country", clickCountryRows, exchangeBreakdownColumns)}
-      ${panel("Access totals by date", "Site/date", accessDateRows, accessColumns)}
-      ${panel("Access totals by hour", "Site/hour", accessHourRows, accessColumns)}
-      ${panel("Access totals by country", "Site/country", accessCountryRows, accessColumns)}
-      ${panel("Recent X402 data sales", "Latest 20", summary.sales.recent, recentSalesColumns)}
-      ${panel("Recent exchange clicks", "Latest 20", summary.clicks.recent, recentClickColumns)}
-      ${panel("Recent page views", "Latest 20", summary.access.recent, recentAccessColumns)}
+      <section class="section-grid">
+        ${renderCountryVisitors(summary, countryRange)}
+        ${panel("Exchange click stats", "By exchange", summary.clicks.exchangeRows, clickColumns)}
+      </section>
+
+      ${detailPanel("X402 data sales by item", "Paid API/item", salesItemRows, salesColumns)}
+      ${detailPanel("X402 data sales by date", "Paid API/date", salesDateRows, salesColumns)}
+      ${detailPanel("X402 data sales by hour", "Paid API/hour", salesHourRows, salesColumns)}
+      ${detailPanel("X402 data sales by country", "Paid API/country", salesCountryRows, salesColumns)}
+      ${detailPanel("Click totals by date", "Exchange/date", clickDateRows, exchangeBreakdownColumns)}
+      ${detailPanel("Click totals by hour", "Exchange/hour", clickHourRows, exchangeBreakdownColumns)}
+      ${detailPanel("Click totals by country", "Exchange/country", clickCountryRows, exchangeBreakdownColumns)}
+      ${detailPanel("Access totals by date", "Site/date", accessDateRows, accessColumns)}
+      ${detailPanel("Access totals by hour", "Site/hour", accessHourRows, accessColumns)}
+      ${detailPanel("Access totals by country", "Site/country", accessCountryRows, accessColumns)}
+      ${detailPanel("Recent X402 data sales", "Latest 20", summary.sales.recent, recentSalesColumns)}
+      ${detailPanel("Recent exchange clicks", "Latest 20", summary.clicks.recent, recentClickColumns)}
+      ${detailPanel("Recent page views", "Latest 20", summary.access.recent, recentAccessColumns)}
     </main>`,
   });
 }
