@@ -482,8 +482,8 @@ function renderCountryVisitors(summary, range) {
 
   return `<section class="country-card">
     <div class="country-head">
-      <h2>Visitors by Country</h2>
-      <nav class="country-tabs" aria-label="Visitors by country range">
+      <h2>Page Views by Country</h2>
+      <nav class="country-tabs" aria-label="Page views by country range">
         <a class="country-tab ${isToday ? "active" : ""}" href="/adm?countryRange=today" rel="nofollow">Today</a>
         <a class="country-tab ${isToday ? "" : "active"}" href="/adm?countryRange=all" rel="nofollow">All-time</a>
       </nav>

@@ -24,14 +24,14 @@ function getVisitorId() {
 
 function VisitorStatsBadge({ stats }) {
   return (
-    <div className="visitor-stats" title="Current viewers and cumulative visits">
+    <div className="visitor-stats" title="Current viewers and cumulative unique visitors">
       <span className="visitor-dot" aria-hidden="true" />
       <span>
         <strong>{stats?.online ?? "-"}</strong> watching
       </span>
       <span className="visitor-separator">|</span>
       <span>
-        total <strong>{stats?.total ?? "-"}</strong> visits
+        total <strong>{stats?.total ?? "-"}</strong> visitors
       </span>
     </div>
   );
