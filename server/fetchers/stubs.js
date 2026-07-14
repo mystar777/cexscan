@@ -766,6 +766,7 @@ export async function fetchMexc() {
         const fallbackApy = parseAprString(item.showApr ?? item.baseApr);
         const { apyMin, apyMax } = apyRangeFromTiers(tiers, fallbackApy, fallbackApy);
         if (apyMax == null || apyMax <= 0) continue;
+        if (item.currency === "USD1" && apyMax >= 100) continue;
 
         const rewardCurrency =
           item.profitCurrency && item.profitCurrency !== item.currency
