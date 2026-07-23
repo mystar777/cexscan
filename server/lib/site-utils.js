@@ -5,6 +5,17 @@ export const SITE_HEADERS = {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
 };
 
+function headersForUrl(url, headers = {}) {
+  const baseHeaders = { ...SITE_HEADERS };
+  if (String(url).startsWith("https://r.jina.ai/")) {
+    baseHeaders["User-Agent"] = "curl/8.0";
+  }
+  return {
+    ...baseHeaders,
+    ...headers,
+  };
+}
+
 export async function fetchSite(url, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeout ?? 20000);
@@ -12,10 +23,7 @@ export async function fetchSite(url, options = {}) {
     const res = await fetch(url, {
       ...options,
       signal: controller.signal,
-      headers: {
-        ...SITE_HEADERS,
-        ...options.headers,
-      },
+      headers: headersForUrl(url, options.headers),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res;
