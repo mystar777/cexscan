@@ -1,7 +1,7 @@
 import { buildPoolHistoryPost, readCache, readPoolHistoryPosts } from "./cache.js";
 import { EXCHANGES } from "./config.js";
 
-const SITE_URL = "https://cexscan.mystarbot.xyz";
+const SITE_URL = "https://cexscan.mystar777.xyz";
 const SITE_NAME = "CEX Stable Staking";
 const EXCHANGE_NAMES = EXCHANGES.map((exchange) => exchange.name);
 

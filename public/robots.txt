@@ -3,4 +3,4 @@ Disallow: /adm
 Disallow: /api/admin
 Disallow: /api/out
 
-Sitemap: https://cexscan.mystarbot.xyz/sitemap.xml
+Sitemap: https://cexscan.mystar777.xyz/sitemap.xml

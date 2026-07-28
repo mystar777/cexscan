@@ -4,7 +4,7 @@ Compare stablecoin staking APY across major centralized exchanges in one place.
 
 ## URL
 
-**https://cexscan.mystarbot.xyz**
+**https://cexscan.mystar777.xyz**
 
 ## Features
 
