@@ -10,6 +10,8 @@
     "build": "vite build",
     "start": "NODE_ENV=production node server/index.js",
     "fetch": "node -e \"import('./server/cache.js').then(m => m.refreshCache().then(d => console.log(d.meta)))\"",
+    "publish:history": "node -e \"import('./server/cache.js').then(m => console.log(m.publishPoolHistoryPost()))\"",
+    "test": "node --test server/cache.test.js",
     "download-icons": "node scripts/download-cmc-icons.js",
     "commit:safe": "node scripts/git-commit-safe.mjs"
   },

@@ -129,7 +129,7 @@ export function readPoolHistoryPosts() {
   }
 }
 
-function writePoolHistoryPost(snapshot) {
+export function publishPoolHistoryPost(snapshot = readCache()) {
   const post = buildPoolHistoryPost(snapshot);
   const posts = readPoolHistoryPosts().filter((entry) => entry.slug !== post.slug);
   posts.unshift(post);
@@ -137,6 +137,7 @@ function writePoolHistoryPost(snapshot) {
     POOL_HISTORY_POSTS_PATH,
     JSON.stringify(posts, null, 2),
   );
+  return post;
 }
 
 function averageApy(products) {
@@ -155,6 +156,5 @@ export async function refreshCache() {
 
   fs.writeFileSync(CACHE_PATH, JSON.stringify(snapshot, null, 2));
   appendHistory(snapshot);
-  writePoolHistoryPost(snapshot);
   return snapshot;
 }

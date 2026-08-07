@@ -37,4 +37,4 @@ export const STABLE_COINS = [
   "U",
 ];
 
-export const FETCH_INTERVAL_MINUTES = 60;
+export const FETCH_INTERVAL_MINUTES = 720;

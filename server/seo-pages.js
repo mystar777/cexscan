@@ -79,8 +79,11 @@ function latestPostFromCache() {
 
 function allPostsWithCurrent() {
   const latest = latestPostFromCache();
-  const posts = readPoolHistoryPosts().filter((post) => post.slug !== latest.slug);
-  return [latest, ...posts].sort((left, right) => String(right.date).localeCompare(String(left.date)));
+  const posts = readPoolHistoryPosts();
+  const published = posts.find((post) => post.slug === latest.slug);
+  const current = published ?? latest;
+  return [current, ...posts.filter((post) => post.slug !== current.slug)]
+    .sort((left, right) => String(right.date).localeCompare(String(left.date)));
 }
 
 function findPost(slug) {
