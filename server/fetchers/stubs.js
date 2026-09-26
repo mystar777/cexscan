@@ -96,6 +96,18 @@ function extractFlightArray(html, propName) {
   return extractJsonArray(decodeNextFlight(html), propName) ?? [];
 }
 
+function extractWindowJson(html, name) {
+  const marker = `window.${name} = `;
+  const start = html.indexOf(marker);
+  if (start < 0) return null;
+
+  const valueStart = start + marker.length;
+  const end = html.indexOf("</script>", valueStart);
+  if (end < 0) return null;
+
+  return JSON.parse(html.slice(valueStart, end).trim().replace(/;$/, ""));
+}
+
 function cleanBingxSignObject(value) {
   if (Array.isArray(value)) {
     for (let i = value.length - 1; i >= 0; i--) {
@@ -398,12 +410,18 @@ export async function fetchBitget() {
   try {
     const html = await fetchSiteText(sourceUrl);
     const nextData = extractNextData(html);
-    const pageProps = nextData?.props?.pageProps;
+    const queryState = extractWindowJson(html, "__ZEUS_REACT_QUERY_STATE__");
+    const queryData = queryState?.queries
+      ?.map((query) => query?.state?.data)
+      .find((data) => data?.hotData || data?.listData);
+    const pageProps = nextData?.props?.pageProps ?? queryData;
     if (!pageProps) throw new Error("Missing Next.js page props");
 
     const rawItems = [
       ...(pageProps.hotData ?? []),
-      ...(pageProps.listData ?? []).flatMap((group) => group.bizLineProductList ?? []),
+      ...(pageProps.listData ?? []).flatMap((group) =>
+        (group.bizLineProductList ?? []).flatMap((item) => item.productList ?? [item]),
+      ),
     ];
 
     for (const item of rawItems) {
@@ -411,7 +429,7 @@ export async function fetchBitget() {
       if (!isStableCoin(asset)) continue;
       if ((item.secondBizLine || item.realSecondBizLine) !== "Savings") continue;
 
-      const period = Number(item.period ?? 0);
+      const period = Number(item.period ?? item.durationDays ?? 0);
       const flexible = item.periodType === 1 || period === 0;
       const tiers = (item.apyList ?? [])
         .map((tier) => ({
@@ -440,7 +458,7 @@ export async function fetchBitget() {
           maxAmount: tiers.at(-1)?.max ?? null,
           note: "Bitget Earn Savings",
           source: "site:bitget-earning",
-          sourceId: item.productId,
+          sourceId: item.productId ?? item.id,
           sourceUrl,
         }),
       );
