@@ -2,6 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { readCache, CACHE_PATH, DATA_DIR } from "./cache.js";
+import { publicSnapshot } from "./public-snapshot.js";
 import { EXCHANGES, STABLE_COINS } from "./config.js";
 
 const STATS_PATH = path.join(DATA_DIR, "visitor-stats.json");
@@ -86,7 +87,7 @@ export function getVisitorStats() {
 function buildSnapshot() {
   const cache = readCache();
   return {
-    products: cache,
+    products: publicSnapshot(cache),
     meta: {
       exchanges: EXCHANGES,
       stableCoins: STABLE_COINS,

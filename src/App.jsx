@@ -179,7 +179,7 @@ export default function App() {
           Synced every 1 hour by Codex automation via public APIs, exchange Earn pages,
           and notices. Sources include Binance, Coinbase, Bybit, OKX, Gate.io, KuCoin,
           Bitget, MEXC, HTX, Kraken, Crypto.com, LBank, and BingX where publicly
-          available. <a href="/history">Read the crypto staking history board</a>.
+          available. <a href="/history">Read the crypto staking history board</a> or <a href="/data">browse the paid data API</a>.
         </p>
       </footer>
     </div>

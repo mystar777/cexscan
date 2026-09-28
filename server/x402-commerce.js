@@ -1,13 +1,16 @@
 import { paymentMiddlewareFromConfig } from "@x402/express";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
+import { createPaywall } from "@x402/paywall";
+import { evmPaywall } from "@x402/paywall/evm";
 import { readCache } from "./cache.js";
 import { recordDataSale } from "./analytics.js";
+import { parseProductQuery, selectProducts } from "./product-query.js";
 
 export const X402_PAY_TO = "0xd25f1f178cc0f63a4feb86cfc450ab27e23337a7";
-export const X402_NETWORK = process.env.X402_NETWORK || "eip155:84532";
+export const X402_NETWORK = "eip155:8453";
 export const X402_FACILITATOR_URL =
-  process.env.X402_FACILITATOR_URL || "https://x402.org/facilitator";
+  process.env.X402_FACILITATOR_URL || "https://facilitator.xpay.sh";
 
 const MIME_JSON = "application/json";
 
@@ -36,6 +39,7 @@ export const DATA_PRODUCTS = [
       "source",
       "sourceUrl",
     ],
+    filters: ["exchange", "asset", "productType", "source", "minApy", "maxApy", "maxDurationDays", "sort", "limit"],
   },
   {
     id: "cexscan-full-cache",
@@ -66,6 +70,7 @@ export const DATA_PRODUCTS = [
       "eligibilityTags",
       "restricted",
     ],
+    filters: ["exchange", "asset", "productType", "source", "minApy", "maxApy", "maxDurationDays", "sort", "limit"],
   },
   {
     id: "cexscan-exchange-status",
@@ -106,7 +111,8 @@ export function getX402Catalog() {
     notes: [
       "Protected endpoints respond with HTTP 402 until the client submits a valid PAYMENT-SIGNATURE header.",
       "Use an x402-compatible client to pay and retry the same GET request.",
-      "Default configuration uses Base Sepolia through x402.org facilitator. Set X402_NETWORK and X402_FACILITATOR_URL for mainnet production.",
+      "Payments use real USDC on Base mainnet. Open an endpoint in a wallet-enabled browser or use an x402-compatible client.",
+      "Product and route-input endpoints accept the listed query filters. One successful payment returns the selected snapshot; another request requires another payment.",
     ],
   };
 }
@@ -133,12 +139,16 @@ function createRoutesConfig() {
 
 function createX402Middleware() {
   const facilitator = new HTTPFacilitatorClient({ url: X402_FACILITATOR_URL });
+  const paywall = createPaywall()
+    .withNetwork(evmPaywall)
+    .withConfig({ appName: "CEXScan", testnet: false })
+    .build();
   return paymentMiddlewareFromConfig(
     createRoutesConfig(),
     facilitator,
     [{ network: X402_NETWORK, server: new ExactEvmScheme() }],
-    undefined,
-    undefined,
+    { appName: "CEXScan", testnet: false },
+    paywall,
     true,
   );
 }
@@ -162,18 +172,24 @@ function routeInputs(snapshot) {
   }));
 }
 
-function dataForItem(item, snapshot) {
+function dataForItem(item, snapshot, query) {
   if (item.id === "cexscan-products-snapshot") {
+    const selected = selectProducts(snapshot.products ?? [], query);
     return {
       meta: snapshot.meta,
-      products: snapshot.products ?? [],
+      total: selected.total,
+      count: selected.products.length,
+      products: selected.products,
     };
   }
 
   if (item.id === "cexscan-route-inputs") {
+    const selected = selectProducts(snapshot.products ?? [], query);
     return {
       meta: snapshot.meta,
-      products: routeInputs(snapshot),
+      total: selected.total,
+      count: selected.products.length,
+      products: routeInputs({ products: selected.products }),
     };
   }
 
@@ -190,11 +206,12 @@ function dataForItem(item, snapshot) {
 function sendProtectedData(item) {
   return async (req, res) => {
     const snapshot = readCache();
+    const query = item.filters ? parseProductQuery(req.query) : undefined;
     await recordDataSale(req, itemWithPayment(item));
     res.json({
       product: itemWithPayment(item),
       soldAt: new Date().toISOString(),
-      data: dataForItem(item, snapshot),
+      data: dataForItem(item, snapshot, query),
     });
   };
 }
@@ -205,6 +222,18 @@ export function handleX402Catalog(_req, res) {
 
 export function installX402Routes(app) {
   app.get("/api/x402/catalog", handleX402Catalog);
+
+  for (const item of DATA_PRODUCTS) {
+    app.get(item.path, (req, res, next) => {
+      try {
+        if (item.filters) parseProductQuery(req.query);
+        else if (Object.keys(req.query).length) throw new Error("This dataset does not accept filters");
+        next();
+      } catch (err) {
+        res.status(400).json({ error: err.message });
+      }
+    });
+  }
 
   try {
     app.use(createX402Middleware());

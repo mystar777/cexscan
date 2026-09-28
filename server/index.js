@@ -20,7 +20,8 @@ import {
   startCacheWatcher,
 } from "./live-events.js";
 import { installX402Routes } from "./x402-commerce.js";
-import { handleHistoryArticle, handleHistoryIndex, handleSitemap } from "./seo-pages.js";
+import { publicSnapshot } from "./public-snapshot.js";
+import { handleDataApiPage, handleHistoryArticle, handleHistoryIndex, handleSitemap } from "./seo-pages.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3344;
@@ -65,7 +66,7 @@ app.get("/api/meta", (_req, res) => {
 });
 
 app.get("/api/products", (_req, res) => {
-  res.json(readCache());
+  res.json(publicSnapshot(readCache()));
 });
 
 app.get("/api/visitor-stats", (_req, res) => {
@@ -74,6 +75,7 @@ app.get("/api/visitor-stats", (_req, res) => {
 
 app.get("/api/events", handleEvents);
 installX402Routes(app);
+app.get("/data", handleDataApiPage);
 app.get("/history", handleHistoryIndex);
 app.get("/history/:postSlug", handleHistoryArticle);
 app.get("/sitemap.xml", handleSitemap);
@@ -95,7 +97,7 @@ app.post("/api/refresh", async (_req, res) => {
   try {
     const snapshot = await refreshCache();
     broadcastSnapshot("manual-refresh");
-    res.json(snapshot);
+    res.json({ meta: snapshot.meta });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

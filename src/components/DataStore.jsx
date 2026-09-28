@@ -6,14 +6,20 @@ function endpointUrl(path) {
   return `${window.location.origin}${path}`;
 }
 
-function CurlBox({ item }) {
-  const command = `curl -H "Accept: application/json" ${endpointUrl(item.path)}`;
-  return <code className="data-curl">{command}</code>;
-}
-
 export default function DataStore() {
   const [catalog, setCatalog] = useState(null);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({ exchange: "", asset: "", minApy: "", limit: "100" });
+
+  function urlFor(item) {
+    const params = new URLSearchParams();
+    if (item.filters) {
+      for (const [key, value] of Object.entries(filters)) {
+        if (value.trim()) params.set(key, value.trim());
+      }
+    }
+    return endpointUrl(`${item.path}${params.size ? `?${params}` : ""}`);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -56,11 +62,18 @@ export default function DataStore() {
         </div>
         <div className="data-payment">
           <span>Network</span>
-          <strong>{catalog.network}</strong>
+          <strong>Base mainnet ({catalog.network})</strong>
           <span>Pay to</span>
           <code>{catalog.payTo}</code>
         </div>
       </header>
+
+      <div className="data-filters">
+        <label>Exchange<input value={filters.exchange} onChange={(event) => setFilters({ ...filters, exchange: event.target.value })} placeholder="Binance" /></label>
+        <label>Asset<input value={filters.asset} onChange={(event) => setFilters({ ...filters, asset: event.target.value })} placeholder="USDC" /></label>
+        <label>Minimum APY (%)<input type="number" min="0" max="1000" step="0.01" value={filters.minApy} onChange={(event) => setFilters({ ...filters, minApy: event.target.value })} /></label>
+        <label>Rows<input type="number" min="1" max="1000" step="1" value={filters.limit} onChange={(event) => setFilters({ ...filters, limit: event.target.value })} /></label>
+      </div>
 
       <div className="data-products">
         {catalog.products.map((item) => (
@@ -90,9 +103,9 @@ export default function DataStore() {
               ))}
             </div>
             <div className="data-endpoint">
-              <CurlBox item={item} />
-              <a href={item.path} target="_blank" rel="noreferrer">
-                Open endpoint
+              <code className="data-curl">{urlFor(item)}</code>
+              <a href={urlFor(item)} target="_blank" rel="noreferrer">
+                Pay with wallet
               </a>
             </div>
           </article>

@@ -1,5 +1,6 @@
 import { buildPoolHistoryPost, readCache, readPoolHistoryPosts } from "./cache.js";
 import { EXCHANGES } from "./config.js";
+import { DATA_PRODUCTS } from "./x402-commerce.js";
 
 const SITE_URL = "https://cexscan.mystar777.xyz";
 const SITE_NAME = "CEX Stable Staking";
@@ -200,6 +201,7 @@ function pageShell({ title, description, canonicalPath, jsonLd = [], body }) {
         <nav class="nav" aria-label="SEO pages">
           <a href="/">Dashboard</a>
           <a href="/history">History Board</a>
+          <a href="/data">Data API</a>
           <a href="/api/meta">API Meta</a>
         </nav>
       </header>
@@ -210,6 +212,42 @@ function pageShell({ title, description, canonicalPath, jsonLd = [], body }) {
     </main>
   </body>
 </html>`;
+}
+
+export function renderDataApiPage() {
+  const products = DATA_PRODUCTS.map((item) => `<tr>
+    <td><strong>${escapeHtml(item.title)}</strong><br /><span class="note">${escapeHtml(item.description)}</span></td>
+    <td class="num">${escapeHtml(item.price)} USDC</td>
+    <td><a href="${escapeHtml(item.path)}">${escapeHtml(item.path)}</a></td>
+  </tr>`).join("\n");
+  return pageShell({
+    title: "CEXScan x402 Data API | Base USDC",
+    description: "Buy current normalized CEX stablecoin staking datasets per request with x402 on Base mainnet. Filter by exchange, asset, APY, duration, and source.",
+    canonicalPath: "/data",
+    jsonLd: [{
+      "@context": "https://schema.org",
+      "@type": "DataCatalog",
+      name: "CEXScan paid staking data API",
+      url: absoluteUrl("/data"),
+      dataset: DATA_PRODUCTS.map((item) => ({
+        "@type": "Dataset",
+        name: item.title,
+        description: item.description,
+        distribution: { "@type": "DataDownload", contentUrl: absoluteUrl(item.path), encodingFormat: "application/json" },
+        offers: { "@type": "Offer", price: item.priceUsd, priceCurrency: "USD" },
+      })),
+    }],
+    body: `<section class="hero">
+      <p class="kicker">x402 Data API</p>
+      <h1>CEXScan staking data API</h1>
+      <p class="lead">Current CEX stablecoin staking products and source status as JSON. Each request is paid in USDC on Base mainnet through the x402 protocol.</p>
+    </section>
+    <table class="board-table"><thead><tr><th>Dataset</th><th>Per request</th><th>Endpoint</th></tr></thead><tbody>${products}</tbody></table>
+    <section class="panel"><h2>Choose the data you need</h2>
+      <p>Product and route-input endpoints accept exchange, asset, productType, source, minApy, maxApy, maxDurationDays, sort, and limit query parameters. A valid request returns HTTP 402 with payment requirements; an x402-compatible client or wallet-enabled browser can pay and retrieve the JSON response.</p>
+      <p><a href="/api/x402/data/products?exchange=Binance&amp;asset=USDC&amp;minApy=3&amp;limit=100">Binance USDC example query</a> | <a href="/api/x402/catalog">Machine-readable catalog</a></p>
+    </section>`,
+  });
 }
 
 function boardJsonLd(posts) {
@@ -393,6 +431,7 @@ export function renderSitemap() {
   const posts = allPostsWithCurrent();
   const urls = [
     { loc: absoluteUrl("/"), lastmod: new Date().toISOString().slice(0, 10), priority: "1.0", changefreq: "hourly" },
+    { loc: absoluteUrl("/data"), lastmod: new Date().toISOString().slice(0, 10), priority: "0.8", changefreq: "weekly" },
     { loc: absoluteUrl("/history"), lastmod: posts[0]?.date ?? new Date().toISOString().slice(0, 10), priority: "0.8", changefreq: "daily" },
     ...posts.map((post) => ({
       loc: absoluteUrl(`/history/${post.slug}`),
@@ -421,6 +460,11 @@ ${urls
 export function handleHistoryIndex(_req, res) {
   res.setHeader("Cache-Control", "public, max-age=300");
   res.type("html").send(renderHistoryIndex());
+}
+
+export function handleDataApiPage(_req, res) {
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.type("html").send(renderDataApiPage());
 }
 
 export function handleHistoryArticle(req, res) {

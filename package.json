@@ -11,7 +11,7 @@
     "start": "NODE_ENV=production node server/index.js",
     "fetch": "node -e \"import('./server/cache.js').then(m => m.refreshCache().then(d => console.log(d.meta)))\"",
     "publish:history": "node -e \"import('./server/cache.js').then(m => console.log(m.publishPoolHistoryPost()))\"",
-    "test": "node --test server/cache.test.js",
+    "test": "node --test server/*.test.js",
     "download-icons": "node scripts/download-cmc-icons.js",
     "commit:safe": "node scripts/git-commit-safe.mjs"
   },
@@ -19,6 +19,7 @@
     "@x402/core": "^2.17.0",
     "@x402/evm": "^2.17.0",
     "@x402/express": "^2.17.0",
+    "@x402/paywall": "2.17.0",
     "cors": "^2.8.5",
     "express": "^4.21.2"
   },
