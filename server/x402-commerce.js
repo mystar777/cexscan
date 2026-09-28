@@ -207,11 +207,17 @@ function sendProtectedData(item) {
   return async (req, res) => {
     const snapshot = readCache();
     const query = item.filters ? parseProductQuery(req.query) : undefined;
-    await recordDataSale(req, itemWithPayment(item));
+    const data = dataForItem(item, snapshot, query);
+    try {
+      await recordDataSale(req, itemWithPayment(item));
+    } catch (err) {
+      console.warn(`[x402] sale analytics failed: ${err.message}`);
+    }
+    res.setHeader("Cache-Control", "private, no-store");
     res.json({
       product: itemWithPayment(item),
       soldAt: new Date().toISOString(),
-      data: dataForItem(item, snapshot, query),
+      data,
     });
   };
 }
